@@ -1,5 +1,4 @@
 #### install and load required r libraries
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 # list of packages I use
 pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "openrouteservice", "tigris", "shinydashboard",
@@ -13,10 +12,6 @@ pacman::p_load(pack)
 for (package in pack) {
   pacman::p_load(package, character.only = TRUE, dependence=TRUE)
 }
-
-# usethis::edit_r_environ("project")
-# flight_api_key <- Sys.getenv("flight_api_key")
-# ors_key <- Sys.getenv("ors_key")
 
 ## Load shapefile data
 parks <- st_read("../output/nyc_parks/nyc_parks.shp")
