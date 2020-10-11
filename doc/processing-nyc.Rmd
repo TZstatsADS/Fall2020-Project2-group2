@@ -1,0 +1,146 @@
+---
+title: "preprocessing"
+author: "Kristen Akey, kka2120"
+date: "10/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = F, message = F)
+```
+
+```{r}
+library(sf)
+library(tidyverse)
+library(leaflet)
+```
+
+
+# cleaning NYC data and creating static plots in prepartion for shiny app
+
+
+## NYC Parks
+
+```{r}
+parks_shp<-st_read("../data/Open_Space_Parks/geo_export_c3910f09-62a7-48c3-b859-47e26ec50538.shp")
+
+parks_shp %>%
+  filter(!is.na(landuse),
+         (landuse %in% c("Waterfront Facility",'Lot', 'Buildings/Institutions', 'Tracking Only',
+                        '<Null>', 'Undeveloped', 'Cemetery', 'Retired N/A', 'Tracking')) == FALSE) %>%
+  mutate(landuse = case_when(landuse=="Community Park" ~ "Park",
+                             landuse=="Neighborhood Park" ~ "Park",
+                             landuse=="Historic House Park" ~ "Park",
+                             landuse=="Triangle/Plaza" ~ "Triangle/Plaza",
+                             landuse=="Recreation Field/Courts" ~  "Recreation Field/Courts",
+                             landuse=="Playground" ~ "Playground",
+                             landuse=="Nature Area" ~ "Nature Area",
+                             landuse=="Parkway" ~ "Parkway",
+                             landuse=="LARGE PARK AREA" ~ "Park",
+                             landuse=="Flagship Park" ~ "Park",
+                             landuse=="EventArea" ~ "Park",
+                             landuse=="Mall" ~ "Parkway",
+                             landuse=="Garden" ~ "Parkway",
+                             landuse=="Jointly Operated Playground" ~ "Playground",
+                             landuse=="School Yard to Playground" ~ "Playground",
+                             landuse=="Strip" ~ "Parkway"
+                             )
+
+         ) -> parks_shp
+
+
+parks_shp %>%
+  as.tibble() %>%
+  dplyr::select(landuse) %>% distinct()
+
+
+## save cleaned shapefile
+# st_write(parks_shp, "../data/nyc_parks.shp")
+```
+
+Plot of parks
+```{r}
+labels <- sprintf(
+      "<strong>%s</strong>",
+      parks_shp$park_name
+    ) %>% lapply(htmltools::HTML)
+
+
+leaflet()  %>% addTiles() %>% 
+  setView(lng = -73.98928, lat = 40.75042,zoom=11) %>% 
+  addPolygons(data=parks_shp,weight=5,col = 'green',
+                label = labels,
+                labelOptions = labelOptions(
+                style = list("font-weight" = "normal", padding = "3px 8px"),
+                textsize = "15px",
+                direction = "auto")) %>%
+  addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE))
+```
+
+
+
+## NYC Covid-19 Open Streets
+
+```{r}
+open_streets <- st_read("../data/Open_Streets_Locations/geo_export_4a00acf9-46e6-4357-a423-8d64d874a1b7.shp")
+```
+
+```{r}
+labels <- sprintf(
+      "From Street: <strong>%s</strong><br/> To Street: <strong>%s</strong>",
+      open_streets$from_stree, open_streets$to_street
+    ) %>% lapply(htmltools::HTML)
+
+
+leaflet()  %>% addTiles() %>% 
+  setView(lng = -73.98928, lat = 40.75042, zoom=11) %>% 
+  addPolygons(data=open_streets,weight=3,col = 'red',
+                label = labels,
+                labelOptions = labelOptions(
+                style = list("font-weight" = "normal", padding = "3px 8px"),
+                textsize = "15px",
+                direction = "auto")) %>%
+  addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE))
+```
+
+
+```{r}
+# can filter Open Streets 
+leaflet() %>% addTiles() %>%
+        addPolygons(data=open_streets[open_streets$type=="Open Streets: Restaurants",],weight=3,col = 'red') %>%
+  addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE))
+```
+
+
+************************************************************************
+
+## Bike lanes and CitiBike stations
+
+```{r}
+bike_lanes <- st_read("../data/Bicycle_Routes/geo_export_21a36b1c-263a-41be-a2e0-091316a94ecc.shp")
+
+bike_lanes %>%
+  as.tibble()
+```
+
+
+### Citibike locations
+
+```{r}
+library(jsonlite)
+
+citibike<-fromJSON("https://gbfs.citibikenyc.com/gbfs/en/station_information.json")
+citibike <- citibike$data$stations
+
+leaflet(data = citibike) %>% addTiles() %>%
+       addMarkers(lng=~lon,lat=~lat, label = ~legacy_id,
+                  clusterOptions = markerClusterOptions()) %>%
+        # addPolygons(data=bike_lanes,weight=3,col = 'red') %>%
+  addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE))
+
+
+citibike %>%
+  unnest(rental_methods)
+```
+
+
