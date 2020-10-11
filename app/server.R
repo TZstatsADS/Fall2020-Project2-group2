@@ -1,153 +1,276 @@
-#
-# This is the server logic of a Shiny web application. You can run the
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
-#-------------------------------------------------App Server----------------------------------
-library(viridis)
-library(dplyr)
-library(tibble)
-library(tidyverse)
-library(shinythemes)
-library(sf)
-library(RCurl)
-library(tmap)
-library(rgdal)
-library(leaflet)
-library(shiny)
-library(shinythemes)
-library(plotly)
-library(ggplot2)
-#can run RData directly to get the necessary date for the app
-#global.r will enable us to get new data everyday
-#update data with automated script
-source("global.R") 
-#load('./output/covid-19.RData')
-shinyServer(function(input, output) {
-#----------------------------------------
-#tab panel 1 - Home Plots
-#preapare data for plot
-output$case_overtime <- renderPlotly({
-    #determin the row index for subset
-    req(input$log_scale)
-    end_date_index <- which(date_choices == input$date)
-    #if log scale is not enabled, we will just use cases
-    if (input$log_scale == FALSE) {
-        #render plotly figure
-        case_fig <- plot_ly()
-        #add comfirmed case lines
-        case_fig <- case_fig %>% add_lines(x = ~date_choices[1:end_date_index], 
-                             y = ~as.numeric(aggre_cases[input$country,])[1:end_date_index],
-                             line = list(color = 'rgba(67,67,67,1)', width = 2),
-                             name = 'Confirmed Cases')
-        #add death line 
-        case_fig <- case_fig %>% add_lines(x = ~date_choices[1:end_date_index],
-                               y = ~as.numeric(aggre_death[input$country,])[1:end_date_index],
-                               name = 'Death Toll')
-        #set the axis for the plot
-        case_fig <- case_fig %>% 
-            layout(title = paste0(input$country,'\t','Trend'),
-                   xaxis = list(title = 'Date',showgrid = FALSE), 
-                   yaxis = list(title = 'Comfirmed Cases/Deaths',showgrid=FALSE)
-                   )
-        }
-    #if enable log scale, we need to take log of the y values
-    else{
-        #render plotly figure
-        case_fig <- plot_ly()
-        #add comfirmed case lines
-        case_fig <- case_fig %>% add_lines(x = ~date_choices[1:end_date_index], 
-                                           y = ~log(as.numeric(aggre_cases[input$country,])[1:end_date_index]),
-                                           line = list(color = 'rgba(67,67,67,1)', width = 2),
-                                           name = 'Confirmed Cases')
-        #add death line 
-        case_fig <- case_fig %>% add_lines(x = ~date_choices[1:end_date_index],
-                                           y = ~log(as.numeric(aggre_death[input$country,])[1:end_date_index]),
-                                           name = 'Death Toll')
-        #set the axis for the plot
-        case_fig <- case_fig %>% 
-            layout(title = paste0(input$country,'<br>','\t','Trends'),
-                   xaxis = list(title = 'Date',showgrid = FALSE), 
-                   yaxis = list(title = 'Comfirmed Cases/Deaths(Log Scale)',showgrid=FALSE)
-            )
-    }
-    return(case_fig)
-        })
-#----------------------------------------
-#tab panel 2 - Maps
-data_countries <- reactive({
-    if(!is.null(input$choices)){
-        if(input$choices == "Cases"){
-            return(aggre_cases_copy)
-            
-        }else{
-            return(aggre_death_copy)
-        }}
-})
+source("global.R")
+source("config.R")
 
-#get the largest number of count for better color assignment
-maxTotal<- reactive(max(data_countries()%>%select_if(is.numeric), na.rm = T))    
-#color palette
-pal <- reactive(colorNumeric(c("#FFFFFFFF" ,rev(inferno(256))), domain = c(0,log(binning(maxTotal())))))    
+server <- function(input, output) {
     
-output$map <- renderLeaflet({
-    map <-  leaflet(countries) %>%
-        addProviderTiles("Stadia.Outdoors", options = providerTileOptions(noWrap = TRUE)) %>%
-        setView(0, 30, zoom = 3) })
+        output$nyc_map <- renderLeaflet({
 
+            leaflet("nyc_map") %>%
+                addTiles() %>% setView(lng = -73.98928, lat = 40.75042,zoom=11) %>%
+                addProviderTiles("CartoDB.Positron", options = providerTileOptions(noWrap = TRUE))
 
-observe({
-    if(!is.null(input$date_map)){
-        select_date <- format.Date(input$date_map,'%Y-%m-%d')
+            })
+        
+
+        output$text2 <- renderUI({
+            HTML("Click where you are on the map,<br/>then click where you want to go.")
+        })
+        
+        proxy <- leafletProxy("nyc_map")
+        
+        observe({
+            if (input$open_street == T) {
+                proxy %>% showGroup("Open Streets")
+            } else {
+                proxy %>% hideGroup("Open Streets")
+            }
+            
+            if (input$citibike == T) {
+                proxy %>% showGroup("CitiBike Stations")
+            } else {
+                proxy %>% hideGroup("CitiBike Stations")
+            }
+            
+            if (input$parktype == "Park" & input$parks==T) {
+                proxy %>% showGroup("parkfiltered")
+            } else {
+                proxy %>% hideGroup("parkfiltered")
+            }
+            
+            if (input$parktype == "Playground"& input$parks==T) {
+                proxy %>% showGroup("playgroundfiltered")
+            } else {
+                proxy %>% hideGroup("playgroundfiltered")
+            }
+            
+            if (input$parktype == "Nature Area"& input$parks==T) {
+                proxy %>% showGroup("naturefiltered")
+            } else {
+                proxy %>% hideGroup("naturefiltered")
+            }
+            
+            if (input$parktype == "Triangle/Plaza"& input$parks==T) {
+                proxy %>% showGroup("plazafiltered")
+            } else {
+                proxy %>% hideGroup("plazafiltered")
+            }
+            
+            if (input$parktype == "Parkway"& input$parks==T) {
+                proxy %>% showGroup("parkwayfiltered")
+            } else {
+                proxy %>% hideGroup("parkwayfiltered")
+            }
+            
+            if (input$parktype == "Recreation Field/Courts"& input$parks==T) {
+                proxy %>% showGroup("recreationfiltered")
+            } else {
+                proxy %>% hideGroup("recreationfiltered")
+            }
+            
+            if (input$bike_lanes == T) {
+                proxy %>% showGroup("bikelanes")
+            } else {
+                proxy %>% hideGroup("bikelanes")
+            }
+            
+            if (input$covid == T) {
+                proxy %>% showGroup("covidcases")
+            } else {
+                proxy %>% hideGroup("covidcases")
+            }
+        })
+        
+        
+        
+        filteredstreets <- reactive({
+            req(input$open_street)
+            req(input$openstreetday)
+            req(input$timesopen)
+            
+            if (input$openstreetday=="Monday") {
+                open_street %>%filter(M_open <= input$timesopen[1] & M_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Tuesday") {
+                open_street %>%filter(T_open <= input$timesopen[1] & T_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Wednesday") {
+                open_street %>%filter(W_open <= input$timesopen[1] & W_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Thursday") {
+                open_street %>%filter(R_open <= input$timesopen[1] & R_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Friday") {
+                open_street %>% 
+                    filter(F_open <= input$timesopen[1] & F_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Saturday") {
+                open_street %>%filter(S_open <= input$timesopen[1] & S_end>= input$timesopen[2])
+            }
+            
+            else if (input$openstreetday=="Sunday") {
+                open_street %>%filter(U_open <= input$timesopen[1] & U_end>= input$timesopen[2])
+            }
+            
+        })
+        
+        # observeEvent(input$open_street,{
+        observe({
+            label_streets <- sprintf(
+                "From Street: <strong>%s</strong><br/> To Street: <strong>%s</strong><br/> Type: <strong>%s</strong>",
+                open_street$from_stree, open_street$to_street, open_street$type
+            ) %>% lapply(htmltools::HTML)
+            
+            leafletProxy("nyc_map") %>% 
+                clearGroup('Open Streets') %>%
+                addPolygons(data=filteredstreets(), label = label_streets, weight=2,  col = 'red', group = "Open Streets")
+        })
+        
+            
+        observeEvent(input$covid,{
+            
+            labels_zip <- sprintf(
+                "<strong>%g%%</strong><br/>Neighborhood: <strong>%s</strong><br/>Zip Code: <strong>%s</strong>",
+                round(char_zips.use@data$COVID_CASE_COUNT/1000,2), char_zips.use@data$NEIGHBORHOOD_NAME, char_zips.use@data$GEOID10
+            ) %>% lapply(htmltools::HTML)
+            
+            pal <- colorNumeric(
+                palette = "Greens",
+                domain = char_zips.use@data$COVID_CASE_COUNT/1000)
+            
+            leafletProxy("nyc_map") %>% 
+                addPolygons(data=char_zips.use, label=labels_zip, fillColor = ~pal(COVID_CASE_COUNT/1000), group = "covidcases", weight=1, col = 'black')
+            
+        })
+        
+        observeEvent(input$parks,{
+            label_parks <- sprintf(
+                "<strong>%s</strong>",
+                parks$park_name
+            ) %>% lapply(htmltools::HTML)
+            
+            leafletProxy("nyc_map") %>% 
+                addPolygons(data=parks[parks$landuse=="Park",],label= label_parks, weight=1, col = 'green', group = "parkfiltered") %>%
+                addPolygons(data=parks[parks$landuse=="Playground",],label= label_parks, weight=1, col = 'green', group = "playgroundfiltered") %>%
+                addPolygons(data=parks[parks$landuse=="Nature Area",],label= label_parks, weight=1, col = 'green', group = "naturefiltered") %>%
+                addPolygons(data=parks[parks$landuse=="Parkway",],label= label_parks, weight=1, col = 'green', group = "parkwayfiltered") %>%
+                addPolygons(data=parks[parks$landuse=="Triangle/Plaza",],label= label_parks, weight=1, col = 'green', group = "plazafiltered") %>%
+                addPolygons(data=parks[parks$landuse=="Recreation Field/Courts",],label= label_parks, weight=1, col = 'green', group = "recreationfiltered") 
+            
+        })
+        
+        observeEvent(input$citibike, {
+            
+            leafletProxy("nyc_map") %>% 
+            addMarkers(data=citibike[citibike$region_id=="71",],lng=~lon,lat=~lat,label = ~name,
+                       clusterOptions = markerClusterOptions(), group = "CitiBike Stations") 
+        })
+        
+        observeEvent(input$bike_lanes, {
+            label_bikelanes <- sprintf(
+                "<strong>%s</strong>",
+                bike_lanes$street
+            ) %>% lapply(htmltools::HTML)
+            
+            leafletProxy("nyc_map") %>% 
+                addPolygons(data=bike_lanes,weight=2, label = label_bikelanes, col = 'blue',  group = "bikelanes") 
+                
+        })
+
+        RV<-reactiveValues(Clicks=list())
+        observeEvent(input$nyc_map_click, {
+            
+            if (input$directions==T) {
+                
+                click <- input$nyc_map_click
+                leafletProxy('nyc_map')%>%addMarkers(lng = click$lng, lat = click$lat)
+                RV$Clicks <- c(RV$Clicks, list(click$lat, click$lng))
+                origin_pt <- c(RV$Clicks[[1]], RV$Clicks[[2]])
+                
+                if (length(RV$Clicks) > 2 ) {
+                    destination_pt <- c(RV$Clicks[[3]], RV$Clicks[[4]])
+                    
+                }
+                
+                if  (length(RV$Clicks) == 4 ) {
+                    locations <- data.frame(lng = c(as.numeric(origin_pt[2]), as.numeric(destination_pt[2])),
+                                            lat = c(as.numeric(origin_pt[1]), as.numeric(destination_pt[1])))
+                    
+                    
+                    dir <- ors_directions(coordinates=  locations, profile="foot-walking",
+                                          output = "sf",
+                                          api_key = ors_key)
+                    leafletProxy("nyc_map") %>% addPolygons(data=dir,group = "directions",layerId = "dir")%>% 
+                        showGroup("directions")
+                    
+                }
+                
+                if  (length(RV$Clicks) > 4 ) {
+                    leafletProxy('nyc_map')%>%clearMarkers()%>% hideGroup("directions")
+                    RV$Clicks <- NULL
+                }
+                
+            }
+            
+        })
+            
+   
+    
+
+    observeEvent(input$Search,{
+        apikey = flight_api_key
+
+        tempsid = "2704a331-fc0b-48f1-83c3-73ab643768db.313"
+        res4 = GET("https://tripadvisor1.p.rapidapi.com/flights/poll",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("sid" = tempsid, "currency"="USD","n"="15","ns"="NON_STOP","o"="0"))
+        jsonres4<-content(res4,as="parsed")
+        price <-jsonres4[["itineraries"]][[1]][["l"]][[1]][["pr"]]["dp"]
+        airline <- jsonres4[["itineraries"]][[1]][["l"]][[1]]["s"]
+        takeoff <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["da"]
+        land <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["aa"]
+        takeofftime <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["dd"]
+        landtime <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["ad"]
+        distance <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["di"]
+        # output$value <- renderPrint({distance})
+        splittakeoff <- strsplit(takeofftime[[1]],"T")
+        splittakeoff = strsplit(splittakeoff[[1]][2],":")
+        takeofftime = paste(splittakeoff[[1]][1],splittakeoff[[1]][2],sep=":")
+        splitlandtime <- strsplit(landtime[[1]],"T")
+        splitlandtime = strsplit(splitlandtime[[1]][2],":")
+        landtime = paste(splitlandtime[[1]][1],splitlandtime[[1]][2],sep=":")
+        # output$value <- renderPrint({landtime})
+        output$value2 <- renderInfoBox({
+            infoBox(
+                h4(airline),
+                paste(takeoff,land,sep="-"),
+                width=1,
+                color = "teal",
+                icon = icon("plane","font-awesome")
+            )
+        })
+        output$value3 <- renderInfoBox({
+            infoBox(
+                h4("Flight Time:"),
+                paste(takeofftime,landtime,sep="-"),
+                width=1,
+                color = "blue",
+                icon=icon("clock","font-awesome")
+            )
+        })
+        output$value4 <- renderInfoBox({
+            infoBox(
+                h4("Price:"),
+                price,
+                width=1,
+                color = "green",
+                icon=icon("dollar-sign","font-awesome")
+            )
+        })
     }
-    if(input$choices == "Cases"){
-        #merge the spatial dataframe and cases dataframe
-        aggre_cases_join <- merge(countries,
-                                  data_countries(),
-                                  by.x = 'NAME',
-                                  by.y = 'country_names',sort = FALSE)
-        #pop up for polygons
-        country_popup <- paste0("<strong>Country: </strong>",
-                                aggre_cases_join$NAME,
-                                "<br><strong>",
-                                "Total Cases: ",
-                                aggre_cases_join[[select_date]],
-                                "<br><strong>")
-        leafletProxy("map", data = aggre_cases_join)%>%
-            addPolygons(fillColor = pal()(log((aggre_cases_join[[select_date]])+1)),
-                        layerId = ~NAME,
-                        fillOpacity = 1,
-                        color = "#BDBDC3",
-                        weight = 1,
-                        popup = country_popup) 
-    } else {
-        #join the two dfs together
-        aggre_death_join<- merge(countries,
-                                 data_countries(),
-                                 by.x = 'NAME',
-                                 by.y = 'country_names',
-                                 sort = FALSE)
-        #pop up for polygons
-        country_popup <- paste0("<strong>Country: </strong>",
-                                aggre_death_join$NAME,
-                                "<br><strong>",
-                                "Total Deaths: ",
-                                aggre_death_join[[select_date]],
-                                "<br><strong>")
-        
-        leafletProxy("map", data = aggre_death_join)%>%
-            addPolygons(fillColor = pal()(log((aggre_death_join[[select_date]])+1)),
-                        layerId = ~NAME,
-                        fillOpacity = 1,
-                        color = "#BDBDC3",
-                        weight = 1,
-                        popup = country_popup)
-        
-        }
-    })
+    )
+}
 
 
-})

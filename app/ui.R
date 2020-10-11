@@ -1,97 +1,81 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-#ag
-#    http://shiny.rstudio.com/
-#
-# Define UI for application that draws a histogram
-library(viridis)
-library(dplyr)
-library(tibble)
-library(tidyverse)
-library(shinythemes)
-library(sf)
-library(RCurl)
-library(tmap)
-library(rgdal)
-library(leaflet)
+
 library(shiny)
-library(shinythemes)
-library(plotly)
-library(ggplot2)
-#load('./output/covid-19.RData')
-shinyUI(navbarPage(title = 'COVID-19',
-                   fluid = TRUE,
-                   collapsible = TRUE,
-                   #Select whichever theme works for the app 
-                   theme = shinytheme("journal"),
-                   #--------------------------
-                   #tab panel 1 - Home
-                   tabPanel("Home",icon = icon("home"),
-                            fluidPage(
-                              fluidRow(
-                                column(12,
-                                       h1("Global Cases overview across time"),
-                                       fluidRow(
-                                         #select the date until now
-                                         column(6,
-                                                sliderInput('date','Date Unitl:',
-                                                            #first day of data recording
-                                                            min = as.Date(date_choices[1]),
-                                                            #present day of data recording
-                                                            max = as.Date(tail(date_choices,1)),
-                                                            value = as.Date(date_choices[1]),
-                                                            timeFormat = "%Y-%m-%d",
-                                                            animate = TRUE, step = 5),
-                                                fluidRow(
-                                                  #select the country we want to see the trend
-                                                  column(6, 
-                                                         selectInput('country','Which Country?',
-                                                                     choices = country_names_choices,
-                                                                     selected = 'United States of America')),
-                                                  #select whether want case number in log-scale or not
-                                                  column(6,
-                                                         radioButtons("log_scale", "In Log Scale:",
-                                                                      choices = c(TRUE,FALSE),
-                                                                      selected = FALSE))
-                                                          )
-                                                ),
-                                         #render plotly output
-                                         column(width = 6,
-                                                plotlyOutput('case_overtime'))
-                                              )
-                                        )
-                                      )
-                                    )
-                                ),
-                   #--------------------------
-                   #tab panel 2 - Map
-                   tabPanel("Maps",icon = icon("map-marker-alt"),div(class = 'outer',
-                            leafletOutput("map", width = "100%", height = "1200"),
-                            absolutePanel(id = "control", class = "panel panel-default", fixed = TRUE, draggable = TRUE,
-                                          top = 300, left = 20, right = "auto", bottom = "auto", width = 250, height = "auto",
-                                          selectInput('choices','Which data to visualize:',
-                                                      choices = c('Cases','Death'),
-                                                      selected = c('Cases')),
-                                          sliderInput('date_map','Input Date:',
-                                                      #first day of data recording
-                                                      min = as.Date(date_choices[1]),
-                                                      #present day of data recording
-                                                      max = as.Date(tail(date_choices,1)),
-                                                      value = as.Date('2020-04-01','%Y-%m-%d'),
-                                                      timeFormat = "%Y-%m-%d",
-                                                      animate = TRUE, step = 5),
-                                          style = "opacity: 0.80"))),
-                   # ----------------------------------
-                   #tab panel 3 - Source
-                   tabPanel("Data Source",icon = icon("cloud-download"),
-                            HTML(
-                              "<h2> Data Source : </h2>
-                              <h4> <p><li><a href='https://coronavirus.jhu.edu/map.html'>Coronavirus COVID-19 Global Cases map Johns Hopkins University</a></li></h4>
-                              <h4><li>COVID-19 Cases : <a href='https://github.com/CSSEGISandData/COVID-19' target='_blank'>Github Johns Hopkins University</a></li></h4>
-                              <h4><li>Spatial Polygons : <a href='https://www.naturalearthdata.com/downloads/' target='_blank'> Natural Earth</a></li></h4>"
-                            ))
-                   
-))
+library(shinydashboard)
+library(httr)
+library(jsonlite)
+library(rlist)
+ui <- dashboardPage(
+  skin="purple",
+  dashboardHeader(title = strong("Covid 19")),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("Home", tabName = "Home",icon = icon("home")),
+      menuItem("World",tabName = "World",menuSubItem("World Data",tabName = "world_data",icon=icon("chart-line","font-awesome")),menuSubItem("Travel Policy",tabName = "policy",icon=icon("route","font-awesome")),menuSubItem("Flights",tabName="flight",icon=icon("plane-departure","font-awesome")),icon = icon("globe",lib = "font-awesome")),
+      menuItem("New York City", tabName = "New York City",menuSubItem("Travel NYC",tabName = "nyc_data",icon=icon("chart-line","font-awesome")),icon = icon("city","font-awesome")),
+      menuItem("About",tabName="About",icon=icon("question-circle","font-awesome"))
+    )
+  ),
+  dashboardBody(
+    tabItems(
+      tabItem(tabName = "Home",h2("introduction and what this project is about")),
+      tabItem(tabName = "nyc_data",
+              titlePanel("Where Can I Travel or Hang Out (Social Distance Style) in New York City?"),
+              h5("Even if you are unable to travel internationally right now, there are still many things to do safely in New York City."),
+              h5("New Yorkers have access to Open Streets, which includes over 100 miles of streets closed off to cars to allow for greater social distancing during Covid-19. Explore and locate the nearest Open Street near you to meet up with your friends for a spacious chat or outdoor dining. New Yorkers also have access to over 100 different parks, recreational centers, and gardens...so much green space! Head out for a walk or run and enjoy the nature side of the city.")  ,
+
+              h5("Not sure if you want to take public transporation yet? There are CitiBikes, easy-to-use pay-by-ride bikes, scattered all around the city to help you get to your next social-distanced hang-out. Use this map to find a bike near you and  bike-friendly roads to travel on.")  ,
+              
+              h5("Lastly, you can stay up-to-date with Covid-19 cases throughout NYC with this map."),
+              h5("While traveling may seem harder nowadays, you can still get out and have fun here in New York City."),
+
+              leafletOutput("nyc_map", width = 1200, height = 800),
+
+              absolutePanel(id = "elements", class = "panel panel-default", top = 325, left = 250, width = 270, height = 270,
+                            fixed = TRUE, draggable = TRUE,bottom = "auto",right="auto",
+                            tags$p("Add layers:"),
+                            checkboxInput("covid", "Covid-19 Rates"),
+                            checkboxInput("open_street", "Open Streets"),
+                            checkboxInput("parks", "Parks"),
+                            checkboxInput("citibike", "Citibike Stations"),
+                            checkboxInput("bike_lanes", "Bike Paths"),
+                            
+                            br(),
+                            checkboxInput("directions", "Get Directions"),
+                            conditionalPanel(condition = "input.directions == true",
+                                             htmlOutput("text2")
+                                             
+                            ),
+                            conditionalPanel(
+                              condition = "input.parks == true", 
+                              selectInput("parktype", "Park Type:",
+                                          list("Park", "Triangle/Plaza", "Parkway", "Recreation Field/Courts", "Playground", "Nature Area"), multiple = F, selected = "Park")
+                            ),
+                            
+                            conditionalPanel(
+                              br(),
+                              h6(tags$b("See what's open!")),
+                              condition = "input.open_street == true",
+                              selectizeInput("openstreetday", "Day of Visit:",
+                                             list("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"), selected="Friday")
+                            ),
+                            conditionalPanel(
+                              condition = "input.open_street == true",
+                              sliderInput("timesopen", "Time Open (Hour)", 
+                                          min = 0, max = 24, value = c(8,12), step = 1)
+                            ))),
+      tabItem(tabName = "world_data",h2("World data")),
+      tabItem(tabName = "policy",h2("Travel policy")),
+      tabItem(tabName = "flight",h2("Flight Search"),fluidPage(box(width = 12,
+                                                                   div(style="display:inline-block",textInput("Departure","Departure From: ","",'190px',"New York")),
+                                                                   div(style="display:inline-block",textInput("Destination","Destination: ","",'190px','Tokyo')),
+                                                                   div(style="display:inline-block",textInput("Departure_Date","Departure Date: ","",'190px','yyyy-mm-dd')),
+                                                                   div(style="display:inline-block",actionButton("Search",icon("refresh"),label="Search",style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
+                                                                   verbatimTextOutput("value"),br(),
+                                                                   div(infoBoxOutput("value2")),
+                                                                   div(infoBoxOutput("value3")),
+                                                                   div(infoBoxOutput("value4"))
+      ))),
+      tabItem(tabName = "About",h4("Group Member"))
+    )
+  )
+)
