@@ -1,8 +1,9 @@
 source("global.R")
 source("config.R")
 
+
 server <- function(input, output) {
-    
+#Kristen's part    
         output$nyc_map <- renderLeaflet({
 
             leaflet("nyc_map") %>%
@@ -218,9 +219,358 @@ server <- function(input, output) {
             
         })
             
-   
+#Elise+ Jaival's part
+        observe({
+            
+            if(input$filter =='Countries'){
+                selected_countries <-reactive(as.vector(latest_orig$CountryName%in%input$Countries))
+                
+                    latest_orig<-mutate(latest_orig, Selected=ifelse(selected_countries(), 'Yes',NA))
+                    
+                    countries_join <- merge(countries,
+                                            latest_orig,
+                                            by.x = 'NAME',
+                                            by.y = 'CountryName',sort = FALSE)
+                    write.csv(countries_join,file= '../app/output/countries_join.csv')
+                    
+                    output$map <- renderLeaflet({
+                        leaflet(countries) %>%setView(0, 30, zoom = 2) })
+                            # addProviderTiles("Mapbox", options = providerTileOptions(id = "mapbox.light",
+                            #                                                          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+                            
+                    
+                    #pop up for polygons: If you click on a country, it shows you the country name and Total cases like below
+                    country_popup <- paste0("<strong>Country: </strong>",countries$NAME,
+                                            "<br>", "International Travel: ",countries_join$intl_travel.value,"<br>",
+                                            "<br>", "Domestic Movement: ",countries_join$dom_move.value,"<br>",
+                                            "<br>", "Stay at Home: ",countries_join$stayhome.value,"<br>",
+                                            "<br>", "Gathering: ",countries_join$gathering.value,"<br>",
+                                            "<br>", "Public Transport: ",countries_join$public_transport.value,"<br>")
+                    
+                    factpal <- colorFactor(topo.colors(1), countries_join$Selected)
+                    
+                    proxy<- leafletProxy("map", data = countries_join)%>%
+                        addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                    fillColor = ~factpal(Selected),color = 'black',weight = "0.7", opacity=1,
+                                    highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                    layerId = ~NAME,popup = country_popup)
+                #})
+            }
+            
+            else if(input$filter =='1 criterion')
+            {
+                #Create heatmaps by policy types
+                heatmap_data <- reactive({
+                    if(input$heatmap == "International Travel"){
+                        return(latest_intl_travel)
+                    }else if(input$heatmap == "Domestic Movement"){
+                        return(latest_dom_move)
+                    }else if(input$heatmap == "Stay at Home"){
+                        return(latest_stayhome)
+                    }else if(input$heatmap == "Gathering Restrictions"){
+                        return(latest_gathering)
+                    }else if(input$heatmap == "Public Transport"){
+                        return(latest_public_transport)}
+                })
+                
+                if(input$heatmap == "International Travel")
+                {
+                    #merge the spatial dataframe and cases dataframe
+                    intl_travel_join <- merge(countries,
+                                              heatmap_data(),
+                                              by.x = 'NAME',
+                                              by.y = 'CountryName',sort = FALSE)
+                    write.csv(intl_travel_join, file = '../app/output/Intl_Travel_join.csv')
+                    
+                    #policy_val <- reactive({return(input$intl_travel)})
+                    
+                    output$map <- renderLeaflet({
+                        leaflet(countries) %>%
+                            # addProviderTiles("Mapbox", options = providerTileOptions(id = "mapbox.light",
+                            #                                                          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+                            setView(0, 30, zoom = 2) })
+                    
+                    if(input$intl_travel=='All')
+                    {
+                        #pop up for polygons: If you click on a country, it shows you the country name and Total cases like below
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                intl_travel_join$NAME,
+                                                "<br>", "Note: ",intl_travel_join$intl_travel.Notes,"<br>")
+                        
+                        factpal <- colorFactor(topo.colors(5), intl_travel_join$intl_travel.value)
+                        
+                        proxy<- leafletProxy("map", data = intl_travel_join)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(intl_travel.value), color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                        proxy %>% clearControls()
+                        proxy %>% addLegend("topleft", pal = factpal,values = ~intl_travel.value, labels = c('no restrictions','screening arrivals',
+                                                                                                             'quarantine arrivals from some or all regions',
+                                                                                                             'ban arrivals from some regions',
+                                                                                                             'ban on all regions or total border closure'),
+                                            title = "Policy",opacity = 1)
+                    }else if (input$intl_travel!='All'){
+                        intl_travel_filter <- intl_travel_join
+                        intl_travel_filter$intl_travel.value[intl_travel_filter$intl_travel.value!=input$intl_travel] <- NA
+                        write.csv(intl_travel_filter, file = '../app/output/Intl_Travel_filter.csv')
+                        
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                intl_travel_filter$NAME,
+                                                "<br>","Note: ", intl_travel_filter$intl_travel.Notes,"<br>")
+                        
+                        factpal <- colorFactor(topo.colors(1), intl_travel_filter$intl_travel.value)
+                        
+                        leafletProxy("map", data = intl_travel_filter)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(intl_travel.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                    }
+                }
+                else if (input$heatmap == "Domestic Movement")
+                {
+                    dom_move_join<- merge(countries,heatmap_data(),by.x = 'NAME',by.y = 'CountryName',sort = FALSE)
+                    write.csv(dom_move_join, file = '../app/output/Dom_move_join.csv')
+                    
+                    if(input$dom_move=='All')
+                    {
+                        #pop up for polygons
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                dom_move_join$NAME,
+                                                "<br>","Note: ",dom_move_join$dom_move.Notes,"<br>")
+                        
+                        factpal2 <- colorFactor(topo.colors(3), dom_move_join$dom_move.value)
+                        proxy<-leafletProxy("map", data = dom_move_join)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal2(dom_move.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                        proxy %>% clearControls()
+                        proxy %>% addLegend("topleft",pal = factpal2,values = ~dom_move.value,
+                                            labels = c('no measures','recommend not to travel between regions/cities',
+                                                       'internal movement restrictions in place'),title = "Policy",opacity = 1)
+                        
+                    }
+                    else if(input$dom_move!='All')
+                    {
+                        dom_move_filter <- dom_move_join
+                        dom_move_filter$dom_move.value[dom_move_filter$dom_move.value!=input$dom_move] <- NA
+                        write.csv(dom_move_filter, file = '../app/output/Dom_move_filter.csv')
+                        
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                dom_move_filter$NAME,
+                                                "<br>","Note: ",dom_move_filter$Notes,"<br>")
+                        
+                        factpal <- colorFactor(topo.colors(1), dom_move_filter$dom_move.value)
+                        
+                        leafletProxy("map", data = dom_move_filter)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(dom_move.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                    }
+                }
+                else if (input$heatmap == "Stay at Home")
+                {
+                    stayhome_join<- merge(countries,heatmap_data(),by.x = 'NAME',by.y = 'CountryName',sort = FALSE)
+                    write.csv(stayhome_join, file = '../app/output/Stayhome_join.csv')   
+                    if(input$stayhome=='All')
+                    {
+                        #pop up for polygons
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                stayhome_join$NAME,
+                                                "<br>","Note: ",stayhome_join$stayhome.Notes, "<br>")
+                        
+                        factpal2 <- colorFactor(topo.colors(4), stayhome_join$stayhome.value)
+                        proxy<-leafletProxy("map", data = stayhome_join)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal2(stayhome.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                        proxy%>%clearControls()
+                        proxy%>%addLegend("topleft",pal = factpal2,values = ~stayhome.value, labels = c('0' = 'no measures', '1' = 'recommend not leaving house',
+                                                                                                        '2' = 'require not leaving house with exceptions for daily exercise, grocery shopping, and essential trips',
+                                                                                                        '3' = 'require not leaving house with minimal exceptions'),title = "Policy",opacity = 1)
+                        
+                    }
+                    else if(input$stayhome!='All')
+                    {
+                        stayhome_filter <- stayhome_join
+                        stayhome_filter$stayhome.value[stayhome_filter$stayhome.value!=input$stayhome] <- NA
+                        write.csv(stayhome_filter, file = '../app/output/Stayhome_filter.csv')
+                        
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                stayhome_join$NAME,
+                                                "<br>","Note: ",stayhome_join$stayhome.Notes, "<br>")
+                        
+                        factpal <- colorFactor(topo.colors(1), stayhome_filter$value)
+                        
+                        leafletProxy("map", data = stayhome_filter)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(stayhome.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                    }
+                }
+                else if (input$heatmap == "Gathering Restrictions")
+                {
+                    gathering_join<- merge(countries,
+                                           heatmap_data(),
+                                           by.x = 'NAME',
+                                           by.y = 'CountryName',
+                                           sort = FALSE)
+                    
+                    if(input$gathering=='All'){
+                        
+                        #pop up for polygons
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                gathering_join$NAME,
+                                                "<br><strong>",
+                                                "Note: ",
+                                                gathering_join$gathering.Notes,
+                                                "<br><strong>")
+                        factpal2 <- colorFactor(topo.colors(4),gathering_join$gathering.value) 
+                                                
+                        proxy<-leafletProxy("map", data = gathering_join)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal2(gathering.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                        proxy%>%clearControls()
+                        proxy%>% addLegend("topleft",pal = factpal2,values = ~gathering.value, labels = c('0' = 'no restrictions',
+                                                                                                          '1' = 'restrictions on very large gatherings (the limit is above 1000 people)',
+                                                                                                          '2' = 'restrictions on gatherings between 101-1000 people',
+                                                                                                          '3' = 'restrictions on gatherings between 11-100 people',
+                                                                                                          '4' = 'restrictions on gatherings of 10 people or less'),title = "Policy",opacity = 1)
+                        
+                    }
+                    else
+                    {
+                        gathering_filter <- gathering_join
+                        gathering_filter$gathering.value[gathering_filter$gathering.value!=input$gathering] <- NA
+                        write.csv(gathering_filter, file = '../app/output/Gathering_filter.csv')
+                        
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                gathering_filter$NAME,
+                                                "<br><strong>",
+                                                "Note: ",
+                                                gathering_filter$gathering.Notes,
+                                                "<br><strong>")
+                        
+                        factpal <- colorFactor(topo.colors(1), gathering$value)
+                        
+                        proxy<-leafletProxy("map", data = gathering_filter)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(gathering.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                    }
+                }
+                
+                else if (input$heatmap == "Public Transport")
+                {
+                    publictrans_join<- merge(countries,
+                                             heatmap_data(),
+                                             by.x = 'NAME',
+                                             by.y = 'CountryName',
+                                             sort = FALSE)
+                    if(input$pub_trans=='All'){
+                        
+                        #pop up for polygons
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                publictrans_join$NAME,
+                                                "<br><strong>",
+                                                "Note: ",
+                                                publictrans_join$public_transport.Notes,
+                                                "<br><strong>")
+                        factpal2 <- colorFactor(topo.colors(4), publictrans_join$public_transport.value)
+                        proxy<-leafletProxy("map", data = publictrans_join)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal2(public_transport.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                        proxy%>%clearControls()
+                        proxy%>% addLegend("topleft",pal = factpal2,values = ~public_transport.value, labels = c('0' = 'no measures',
+                                                                                                                 '1' = 'recommend closing (or significantly reduce volume/route/means of transport available)',
+                                                                                                                 '2' = 'require closing (or prohibit most citizens from using it)'),title = "Policy",opacity = 1)
+                    }
+                    else
+                    {
+                        publictrans_filter <- publictrans_join
+                        publictrans_filter$public_transport.value[publictrans_filter$public_transport.value!=input$pub_trans] <- NA
+                        write.csv(publictrans_filter, file = '../app/output/Publictrans_filter.csv')
+                        
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                publictrans_filter$NAME,
+                                                "<br><strong>",
+                                                "Note: ",
+                                                publictrans_filter$public_transport.Notes,
+                                                "<br><strong>")
+                        
+                        factpal <- colorFactor(topo.colors(1), publictrans_filter$public_transport.value)
+                        leafletProxy("map", data = publictrans_filter)%>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~factpal(public_transport.value),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup)
+                    }
+                }
+            }
+            
+            else if(input$filter =='Multiple criteria')
+            {
+                
+                #Process Latest_all policies dataset:
+                latest_all = merge(latest_intl_travel, latest_dom_move, by= 'CountryName',duplicateGeoms = TRUE)
+                latest_all <-merge(latest_all,latest_stayhome,by= 'CountryName',duplicateGeoms = TRUE)
+                latest_all <-merge(latest_all,latest_gathering,by= 'CountryName',duplicateGeoms = TRUE)
+                latest_all <-merge(latest_all,latest_public_transport,by= 'CountryName',duplicateGeoms = TRUE)
+                write.csv(latest_all, file = '../app/output/Latest_all.csv')
+                
+                #Subset latest_all by International Travel value option
+                policy_data <- reactive({
+                    if('International Travel'%in%input$choices){
+                        latest_all<-latest_all%>%filter(intl_travel.value==input$intl_travel)}
+                    if('Domestic Movement'%in%input$choices){
+                        latest_all<-latest_all%>%filter(dom_move.value==input$dom_move)}
+                    if('Stay at Home'%in%input$choices){
+                        latest_all<-latest_all%>%filter(stayhome.value==input$stayhome)}
+                    if('Gathering Restrictions'%in%input$choices){
+                        latest_all<-latest_all%>%filter(gathering.value==input$gathering)}
+                    if('Public Transport'%in%input$choices){
+                        latest_all<-latest_all%>%filter(public_transport.value==input$pub_trans)}
+                    return (latest_all)})
+                
+                observe({
+                    policy_join <- merge(countries,
+                                         policy_data(),
+                                         by.x = 'NAME',
+                                         by.y = 'CountryName',sort = FALSE)
+                    write.csv(policy_join, file = '../app/output/Policy_join.csv')
+                    
+                    output$map <- renderLeaflet({
+                        leaflet(countries) %>%
+                            # addProviderTiles("Mapbox", options = providerTileOptions(id = "mapbox.light",
+                            #                                                          accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+                            setView(0, 30, zoom = 2) })
+                    
+                    #pop up for polygons: If you click on a country, it shows you the country name and Total cases like below
+                    country_popup <- paste0("<strong>Country: </strong>",
+                                            policy_join$NAME)
+                    
+                    factpal <- colorFactor(topo.colors(1), policy_join$intl_travel.value)
+                    
+                    proxy<- leafletProxy("map", data = policy_join)%>%
+                        addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                    fillColor = ~factpal(intl_travel.value),color = 'black',weight = "0.7", opacity=1,
+                                    highlightOptions = highlightOptions(color = "red",weight = 3,bringToFront = TRUE),
+                                    layerId = ~NAME,popup = country_popup)
+                })
+            }
+        })     
     
-
+#Sophie's part
         observeEvent(input$Search,{
             apikey = "4dcc578c19msh1d2028f0e5f7d31p1afb6cjsnb8c0df9b8a06"
             res = GET("https://tripadvisor1.p.rapidapi.com/airports/search",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("locale" = "en_US", "query" = input$Departure))
