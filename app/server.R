@@ -221,56 +221,99 @@ server <- function(input, output) {
    
     
 
-    observeEvent(input$Search,{
-        apikey = flight_api_key
-
-        tempsid = "2704a331-fc0b-48f1-83c3-73ab643768db.313"
-        res4 = GET("https://tripadvisor1.p.rapidapi.com/flights/poll",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("sid" = tempsid, "currency"="USD","n"="15","ns"="NON_STOP","o"="0"))
-        jsonres4<-content(res4,as="parsed")
-        price <-jsonres4[["itineraries"]][[1]][["l"]][[1]][["pr"]]["dp"]
-        airline <- jsonres4[["itineraries"]][[1]][["l"]][[1]]["s"]
-        takeoff <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["da"]
-        land <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["aa"]
-        takeofftime <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["dd"]
-        landtime <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["ad"]
-        distance <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["di"]
-        # output$value <- renderPrint({distance})
-        splittakeoff <- strsplit(takeofftime[[1]],"T")
-        splittakeoff = strsplit(splittakeoff[[1]][2],":")
-        takeofftime = paste(splittakeoff[[1]][1],splittakeoff[[1]][2],sep=":")
-        splitlandtime <- strsplit(landtime[[1]],"T")
-        splitlandtime = strsplit(splitlandtime[[1]][2],":")
-        landtime = paste(splitlandtime[[1]][1],splitlandtime[[1]][2],sep=":")
-        # output$value <- renderPrint({landtime})
-        output$value2 <- renderInfoBox({
-            infoBox(
-                h4(airline),
-                paste(takeoff,land,sep="-"),
-                width=1,
-                color = "teal",
-                icon = icon("plane","font-awesome")
-            )
-        })
-        output$value3 <- renderInfoBox({
-            infoBox(
-                h4("Flight Time:"),
-                paste(takeofftime,landtime,sep="-"),
-                width=1,
-                color = "blue",
-                icon=icon("clock","font-awesome")
-            )
-        })
-        output$value4 <- renderInfoBox({
-            infoBox(
-                h4("Price:"),
-                price,
-                width=1,
-                color = "green",
-                icon=icon("dollar-sign","font-awesome")
-            )
-        })
-    }
-    )
+        observeEvent(input$Search,{
+            apikey = "4dcc578c19msh1d2028f0e5f7d31p1afb6cjsnb8c0df9b8a06"
+            res = GET("https://tripadvisor1.p.rapidapi.com/airports/search",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("locale" = "en_US", "query" = input$Departure))
+            res2 = GET("https://tripadvisor1.p.rapidapi.com/airports/search",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("locale" = "en_US", "query" = input$Destination))
+            jsonres<-content(res,as="parsed")
+            jsonres2<-content(res2,as="parsed")
+            departureairport <- list()
+            destinationairport <- list()
+            i <- 1
+            while (i < 4  & !(i > length(jsonres))){
+                departureairport =list.append(departureairport,jsonres[[i]][[1]])
+                i = i+ 1
+            }
+            j <- 1
+            while (j < 4  & !(j > length(jsonres2))){
+                destinationairport =list.append(destinationairport,jsonres2[[j]][[1]])
+                j = j+ 1
+            }
+            sid <- ""
+            jsonres3 <- ""
+            m <- 1
+            while(m < 3){
+                res3 = GET("https://tripadvisor1.p.rapidapi.com/flights/create-session",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("currency" = "USD", "ta"="1","c"="0","d1"=destinationairport[1],"o1"=departureairport[1],"dd1"=input$Departure_Date,"dd2"=input$Return_Date))
+                jsonres3<-content(res3,as="parsed")
+                sid = jsonres3[["search_params"]]["sid"]
+                if(sid != "NULL"){
+                    break
+                }
+                m = m+1
+            }
+            if (!(is.null(sid)) & (sid != "")){
+                takeofftime <- ""
+                n <- 1
+                while((length(takeofftime == 0) | is.null(takeofftime)) & n < 3){
+                    res4 = GET("https://tripadvisor1.p.rapidapi.com/flights/poll",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("sid" = sid, "currency"="USD","n"="15","ns"="NON_STOP","so"="PRICE","o"="0"))
+                    jsonres4<-content(res4,as="parsed")
+                    takeofftime <- jsonres4[["itineraries"]][[1]][["f"]][[1]][["l"]][[1]]["dd"]
+                    n = n+1
+                }
+                listrender <- list()
+                if(!is.null(takeofftime)){
+                    p <- 1
+                    v <- list()
+                    while(p < 5 & p < length(jsonres4[["itineraries"]])+1){
+                        price <- jsonres4[["itineraries"]][[p]][["l"]][[1]][["pr"]]["dp"]
+                        airline <- jsonres4[["itineraries"]][[p]][["l"]][[1]]["s"]
+                        takeoff <- jsonres4[["itineraries"]][[p]][["f"]][[1]][["l"]][[1]]["da"]
+                        land = jsonres4[["itineraries"]][[p]][["f"]][[1]][["l"]][[1]]["aa"]
+                        takeofftime <- jsonres4[["itineraries"]][[p]][["f"]][[1]][["l"]][[1]]["dd"]
+                        landtime <- jsonres4[["itineraries"]][[p]][["f"]][[1]][["l"]][[1]]["ad"]
+                        distance <- jsonres4[["itineraries"]][[p]][["f"]][[1]][["l"]][[1]]["di"]
+                        splittakeoff <- strsplit(takeofftime[[1]],"T")
+                        splittakeoff <- strsplit(splittakeoff[[1]][2],":")
+                        takeofftime <- paste(splittakeoff[[1]][1],splittakeoff[[1]][2],sep=":")
+                        splitlandtime <- strsplit(landtime[[1]],"T")
+                        splitlandtime <- strsplit(splitlandtime[[1]][2],":")
+                        landtime <- paste(splitlandtime[[1]][1],splitlandtime[[1]][2],sep=":")
+                        v[[p]] <- box(width=12,
+                                      list(
+                                          infoBox(
+                                              h4(airline),
+                                              paste(takeoff,land,sep="-"),
+                                              width=4,
+                                              color = "teal",
+                                              icon = icon("plane","font-awesome")
+                                          ),
+                                          infoBox(
+                                              h4("Flight Time:"),
+                                              paste(takeofftime,landtime,sep="-"),
+                                              width=4,
+                                              color = "blue",
+                                              icon=icon("clock","font-awesome")
+                                          ),
+                                          infoBox(
+                                              h4("Price:"),
+                                              price,
+                                              width=4,
+                                              color = "green",
+                                              icon=icon("dollar-sign","font-awesome")
+                                          )
+                                      ))
+                        p=p+1
+                    }
+                    output$value2 <- renderPrint({paste("Check out the results below ",Sys.time())})
+                    output$ticket <- renderUI(v)
+                }else{
+                    output$value2 <- renderPrint({paste("API errer. Try again later.",Sys.time())})
+                }
+            }else{
+                output$value2 <- renderPrint({paste("No flight found. Try another date.",Sys.time(),sid,sep=" ")})
+            }
+        }
+        )
 }
 
 

@@ -70,11 +70,11 @@ ui <- dashboardPage(
                                                                    div(style="display:inline-block",textInput("Destination","Destination: ","",'190px','Tokyo')),
                                                                    div(style="display:inline-block",textInput("Departure_Date","Departure Date: ","",'190px','yyyy-mm-dd')),
                                                                    div(style="display:inline-block",actionButton("Search",icon("refresh"),label="Search",style="color: #fff; background-color: #337ab7; border-color: #2e6da4")),
-                                                                   verbatimTextOutput("value"),br(),
-                                                                   div(infoBoxOutput("value2")),
-                                                                   div(infoBoxOutput("value3")),
-                                                                   div(infoBoxOutput("value4"))
-      ))),
+                                                                   verbatimTextOutput("value"),
+                                                                   verbatimTextOutput("value2")
+      ),
+      div(uiOutput("ticket"))
+      )),
       tabItem(tabName = "About",h4("Group Member"))
     )
   )

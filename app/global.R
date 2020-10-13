@@ -2,7 +2,7 @@
 
 # list of packages used
 pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "tigris", "shinydashboard",
-          "httr", "jsonlite", "rlist")
+          "httr", "jsonlite", "rlist","shinycssloaders")
 
 # load packages and data
 if (!require("pacman")) install.packages("pacman")
