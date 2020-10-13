@@ -1,7 +1,7 @@
 #### install and load required r libraries
 
-# list of packages I use
-pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "openrouteservice", "tigris", "shinydashboard",
+# list of packages used
+pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "tigris", "shinydashboard",
           "httr", "jsonlite", "rlist")
 
 # load packages and data
@@ -11,6 +11,11 @@ pacman::p_load(pack)
 # if not already installed, install and load packages
 for (package in pack) {
   pacman::p_load(package, character.only = TRUE, dependence=TRUE)
+}
+
+if(!require('openrouteservice')){
+  remotes::install_github("GIScience/openrouteservice-r")
+  library(openrouteservice)
 }
 
 ## Load shapefile data
