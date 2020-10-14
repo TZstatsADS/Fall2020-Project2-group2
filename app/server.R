@@ -3,6 +3,75 @@ source("config.R")
 
 
 server <- function(input, output) {
+    
+    #create summary box for total covid case in the world as summary
+    output$covid_case_world <- renderValueBox({
+        #-----need dataframe value------#
+        valueBox(totalactivecases_data, subtitle = 'Total cases in the world', 
+                 icon = icon('globe-americas'), 
+                 color = 'light-blue')})
+    output$covid_case_nyc <- renderValueBox({
+        #-----need dataframe value------#
+        valueBox(nyc_cases, subtitle = 'Total cases in NYC', 
+                 icon = icon('city'), 
+                 color = 'teal')
+    })
+    output$countries_without_travel_bans <- renderValueBox({
+        valueBox(total_banall, subtitle = 'Countries with travel bans', 
+                 icon = icon('flag'), 
+                 color = 'olive')
+        
+        
+        
+    })
+    
+    output$panel1 <- renderUI({
+        div(br(), box(width = 15,  'This tab shows each country’s most recent Covid-19 cases and related policies across the world so you can figure out where you can travel during the pandemic. When you’ve chosen a country you can and want to travel to, find the best priced flight with real-time flight information, including departure time and fare price, to finalize your next international voyage. ',
+                      br(),  
+                      tags$div(tags$ul(
+                          tags$li("Policies: continuously updated latest government policies pulled from Oxford Covid-19 Government Response Tracker."),
+                          tags$li("Filter by 1 criteria: heatmap of every country’s policies/ Covid-19 data with detailed notes on policy of interest. Users can also filter out countries that adopt a certain policy (e.g. no measure) within each criteria (e.g. International Travel) by selecting that policy from the dropdown."),
+                          tags$li("Filter by Multiple criteria: After selecting values for each and every criteria of interest, the map will highlight those that meet the requirements."),
+                          tags$li("Filter by Countries: Select countries of interest. Hover over each country for a list of all its policies and Covid-19 data.")
+                      ))
+        )
+        )
+    })
+    output$panel2 <- renderUI({
+        div(br(), box(width = 15, 'Even if you can’t travel internationally right now, you can still travel, explore, and hang out around New York City. This tab contains a map of New York City that allows you to find your nearest park or preferred outdoor space, social-distance spots and dining, bike stations, bike lanes, as well as stay up-to-date on Covid-19 cases in New York City.', br(),  
+                      tags$div(tags$ul(
+                          tags$li("Open Street data: streets closed off to cars in NYC, for pedistriations to hang-out and restaurants to create outdoor dining during Covid-19."),
+                          tags$li("Citibike: shows every Citibike, easy-to-use pay-by-ride bikes, station in New York City."),
+                          tags$li("Parks: New York City parks."),
+                          tags$li("Directions: find the fastest walking path to get from where you are in the city to where you want to go."),
+                          tags$li("Covid-19: up-to-date information of Covid-19 cases in each zip code in New York City.")
+                      ))) 
+        )
+    })
+    
+    observeEvent("", {
+        show('world_panel')
+        hide('nyc_panel')
+        
+    }, once = TRUE)
+    
+    observeEvent(input$World_covid_case, {
+        shinyjs::show('world_panel')
+        shinyjs::hide('nyc_panel')
+        
+    })
+    observeEvent(input$NYC_covid_case, {
+        shinyjs::show('nyc_panel')
+        shinyjs::hide('world_panel')
+        
+    })
+    
+    
+    
+    
+    
+    
+    
 #Kristen's part    
         output$nyc_map <- renderLeaflet({
 
@@ -617,7 +686,7 @@ server <- function(input, output) {
     
 #Sophie's part
         observeEvent(input$Search,{
-            apikey = "4dcc578c19msh1d2028f0e5f7d31p1afb6cjsnb8c0df9b8a06"
+            apikey = "9365b5afafmsh81270de0cb79831p113144jsn2ea3dd851a6a"
             res = GET("https://tripadvisor1.p.rapidapi.com/airports/search",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("locale" = "en_US", "query" = input$Departure))
             res2 = GET("https://tripadvisor1.p.rapidapi.com/airports/search",add_headers("x-rapidapi-host"="tripadvisor1.p.rapidapi.com","x-rapidapi-key"=apikey),query=list("locale" = "en_US", "query" = input$Destination))
             jsonres<-content(res,as="parsed")
@@ -702,7 +771,7 @@ server <- function(input, output) {
                     output$value2 <- renderPrint({paste("Check out the results below ",Sys.time())})
                     output$ticket <- renderUI(v)
                 }else{
-                    output$value2 <- renderPrint({paste("API errer. Try again later.",Sys.time())})
+                    output$value2 <- renderPrint({paste("API error. Try again later.",Sys.time())})
                 }
             }else{
                 output$value2 <- renderPrint({paste("No flight found. Try another date.",Sys.time(),sid,sep=" ")})

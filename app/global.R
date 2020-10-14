@@ -261,11 +261,24 @@ colnames(current_14) <- c("Name","Change")
 
 currentcases <- drop_na(as.data.frame(c(current,current_14[2])))
 colnames(currentcases)[1] <-"CountryName"
+currentcases$Change <- round(currentcases$Change,digits = 2)
 
 latest_orig <- merge(latest_intl_travel, latest_dom_move, by= 'CountryName',duplicateGeoms = TRUE)
 latest_orig <- merge(latest_orig,latest_stayhome,by= 'CountryName',duplicateGeoms = TRUE)
 latest_orig <- merge(latest_orig,latest_gathering,by= 'CountryName',duplicateGeoms = TRUE)
 latest_orig <- merge(latest_orig,latest_public_transport,by= 'CountryName',duplicateGeoms = TRUE)
 latest_orig <- merge(latest_orig,currentcases,by= 'CountryName',duplicateGeoms = TRUE)
-write.csv(currentcases, file = '../output/currentcases.csv',row.names=F)
-write.csv(latest_orig, file = '../output/latest_orig.csv',row.names=F)
+
+intl_travel_legend<-c('All',unique(latest_intl_travel$intl_travel.value))
+dom_move_legend<-c('All',unique(latest_dom_move$dom_move.value))
+stayhome_legend<-c('All',unique(latest_stayhome$stayhome.value))
+gathering_legend<-c('All',unique(latest_gathering$gathering.value))
+public_transport_legend<-c('All',unique(latest_public_transport$public_transport.value))
+
+totalactivecases_data <- sum(latest_orig$Current)
+nyc_cases <- sum(data.use$COVID_CASE_COUNT)
+total_banall <-  nrow(latest_orig[latest_orig$intl_travel.value=='ban on all regions/total border closure'
+                                  |latest_orig$intl_travel.value=='ban arrivals from some regions',])
+
+write.csv(currentcases, file = '../app/output/currentcases.csv',row.names=F)
+write.csv(latest_orig, file = '../app/output/latest_orig.csv',row.names=F)
