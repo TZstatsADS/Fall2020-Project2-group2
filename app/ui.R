@@ -38,7 +38,7 @@ ui <- dashboardPage(
               fluidRow(box(width = 12, title = "Introduction", status = "primary",
                            solidHeader = TRUE, 
                            h5("Since China reported its first cases to the World Health Organization (WHO) in December, authorities in 214 countries have reported about 37 million Covid-19 cases and 1.1 million deaths. "), 
-                           h5('Covid-19 has changed how everyone lives their lives today. Masks and social-distancing, for example, are mandated in many countries and cities throughout the world. Most social or large gatherings have been canceled indefinitely. And at this point, many people have had to quarantine in their home for weeks, if not months.')
+                           h5('It can seem like with Covid-19, it is impossible to travel. This app was built for New Yorkers, to show them all the places they are still able to travel to or safely hang-out at, even with the pandemic still present.')
               )), 
               useShinyjs(),
               introjsUI(),

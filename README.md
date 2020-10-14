@@ -28,7 +28,7 @@ Term: Fall 2020
 
 + **Project summary**: Since China reported its first cases to the World Health Organization (WHO) in December, authorities in 214 countries have reported about 37 million Covid-19 cases and 1.1 million deaths. It can seem like with Covid-19, it is impossible to travel. This app was built for New Yorkers, to show them all the places they are still able to travel to or safely hang-out at, even with the pandemic still present.
 
-+ **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
++ **Contribution statement**:  All members brainstormed on the project topic. All team members contributed to the GitHub repository and prepared the presentation. All team members approve our work presented in our GitHub repository including this contribution statement. Detailed contribution statement [here](doc/a_note_on_contributions.md).
 
 + **Project link**: [https://kka2120.shinyapps.io/travel-during-covid-19/](https://kka2120.shinyapps.io/travel-during-covid-19/)
 

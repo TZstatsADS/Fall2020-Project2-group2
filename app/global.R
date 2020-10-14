@@ -1,18 +1,109 @@
 #### install and load required r libraries
 
-# list of packages used
-pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "tigris", "shinydashboard",
-          "httr", "jsonlite", "rlist","shinycssloaders","RCurl","rgdal","shinythemes","tmap","viridis","DT","zoo")
+# # list of packages used
+# pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "tigris", "shinydashboard",
+#           "httr", "jsonlite", "rlist","shinycssloaders","RCurl","rgdal","shinythemes","tmap","viridis","DT","zoo")
+# 
+# #Kristen's part
+# # load packages and data
+# if (!require("pacman")) install.packages("pacman")
+# pacman::p_load(pack)
+# 
+# # if not already installed, install and load packages
+# for (package in pack) {
+#   pacman::p_load(package, character.only = TRUE, dependence=TRUE)
+# }
 
-#Kristen's part
-# load packages and data
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(pack)
-
-# if not already installed, install and load packages
-for (package in pack) {
-  pacman::p_load(package, character.only = TRUE, dependence=TRUE)
+if (!require("tidyverse")) {
+  install.packages("tidyverse")
+  library(tidyverse)
 }
+
+if (!require("shiny")) {
+  install.packages("shiny")
+  library(shiny)
+}
+
+if (!require("sf")) {
+  install.packages("sf")
+  library(sf)
+}
+
+if (!require("leaflet")) {
+  install.packages("leaflet")
+  library(leaflet)
+}
+
+if (!require("jsonlite")) {
+  install.packages("jsonlite")
+  library(jsonlite)
+}
+
+if (!require("raster")) {
+  install.packages("raster")
+  library(raster)
+}
+
+if (!require("tigris")) {
+  install.packages("tigris")
+  library(tigris)
+}
+
+if (!require("shinydashboard")) {
+  install.packages("shinydashboard")
+  library(shinydashboard)
+}
+
+if (!require("httr")) {
+  install.packages("httr")
+  library(httr)
+}
+
+if (!require("rlist")) {
+  install.packages("rlist")
+  library(rlist)
+}
+
+if (!require("shinycssloaders")) {
+  install.packages("shinycssloaders")
+  library(shinycssloaders)
+}
+
+if (!require("RCurl")) {
+  install.packages("RCurl")
+  library(RCurl)
+}
+
+if (!require("rgdal")) {
+  install.packages("rgdal")
+  library(rgdal)
+}
+
+if (!require("shinythemes")) {
+  install.packages("shinythemes")
+  library(shinythemes)
+}
+
+if (!require("tmap")) {
+  install.packages("tmap")
+  library(tmap)
+}
+
+if (!require("viridis")) {
+  install.packages("viridis")
+  library(viridis)
+}
+
+if (!require("DT")) {
+  install.packages("DT")
+  library(DT)
+}
+
+if (!require("zoo")) {
+  install.packages("zoo")
+  library(zoo)
+}
+
 
 if(!require('openrouteservice')){
   remotes::install_github("GIScience/openrouteservice-r")
@@ -20,18 +111,18 @@ if(!require('openrouteservice')){
 }
 
 ## Load shapefile data
-parks <- st_read("../output/nyc_parks/nyc_parks.shp")
+parks <- st_read("./output/nyc_parks/nyc_parks.shp")
 citibike<-fromJSON("https://gbfs.citibikenyc.com/gbfs/en/station_information.json")
 citibike <- citibike$data$stations
-bike_lanes <- st_read("../data/Bicycle_Routes/geo_export_21a36b1c-263a-41be-a2e0-091316a94ecc.shp")
-open_street <- st_read("../output/open_street/open_streets.shp")
+bike_lanes <- st_read("./output/Bicycle_Routes/geo_export_21a36b1c-263a-41be-a2e0-091316a94ecc.shp")
+open_street <- st_read("./output/open_street/open_streets.shp")
 covid_df <- read_csv("https://raw.githubusercontent.com/nychealth/coronavirus-data/master/data-by-modzcta.csv")
 
 data.use <- covid_df %>% dplyr::select(MODIFIED_ZCTA, COVID_CASE_COUNT, NEIGHBORHOOD_NAME)
 options(tigris_use_cache = TRUE)
 char_zips <- zctas(cb = TRUE, starts_with = "1", state="New York")
 
-nyc_zips <- readLines("../output/nyc_zipcodes.csv")
+nyc_zips <- readLines("./output/nyc_zipcodes.csv")
 char_zips <- char_zips %>% filter(ZCTA5CE10 %in% nyc_zips)
 
 data.use$MODIFIED_ZCTA <- as.character(data.use$MODIFIED_ZCTA)
@@ -61,7 +152,7 @@ allchanges$Flag = str_replace_all(allchanges$Flag,
                                   c('0'="Regional",'1'='National'))
 
 allchanges = allchanges %>% filter(PolicyValue !='NA') %>% mutate(region = tolower(CountryName),value = PolicyValue)
-write.csv(allchanges, '../output/allchanges.csv')
+write.csv(allchanges, './output/allchanges.csv')
 
 #Create International travel policy var
 intl_travel = allchanges%>%filter(PolicyType=='C8: International travel controls') 
@@ -128,29 +219,29 @@ names(latest_public_transport)<-c('CountryName','public_transport-CountryCode','
                                   'Public Transport','public_transport-PolicyValue','public_transport-Flag',	
                                   'public_transport-Notes',	'public_transport-region','public_transport-value')
 
-write.csv(latest_intl_travel, file = '../output/Latest_Intl_Travel.csv',row.names=F)
-write.csv(latest_dom_move, file = '../output/Latest_dom_move.csv',row.names=F)
-write.csv(latest_stayhome, file = '../output/Latest_stayhome.csv',row.names=F)
-write.csv(latest_gathering, file = '../output/Latest_gathering.csv',row.names=F)
-write.csv(latest_public_transport, file = '../output/Latest_public_transport.csv',row.names=F)
+write.csv(latest_intl_travel, file = './output/Latest_Intl_Travel.csv',row.names=F)
+write.csv(latest_dom_move, file = './output/Latest_dom_move.csv',row.names=F)
+write.csv(latest_stayhome, file = './output/Latest_stayhome.csv',row.names=F)
+write.csv(latest_gathering, file = './output/Latest_gathering.csv',row.names=F)
+write.csv(latest_public_transport, file = './output/Latest_public_transport.csv',row.names=F)
 
-latest_intl_travel <- read.csv('../output/Latest_Intl_Travel.csv')
-latest_dom_move <- read.csv('../output/Latest_dom_move.csv')
-latest_stayhome <- read.csv('../output/Latest_stayhome.csv')
-latest_gathering <- read.csv('../output/Latest_gathering.csv')
-latest_public_transport <- read.csv('../output/Latest_public_transport.csv')
+latest_intl_travel <- read.csv('./output/Latest_Intl_Travel.csv')
+latest_dom_move <- read.csv('./output/Latest_dom_move.csv')
+latest_stayhome <- read.csv('./output/Latest_stayhome.csv')
+latest_gathering <- read.csv('./output/Latest_gathering.csv')
+latest_public_transport <- read.csv('./output/Latest_public_transport.csv')
 
 #Download the spatial polygons dataframe in this link
 # https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
 
-output_shapefile_filepath <- "../output/countries_shapeFile.RData"
+output_shapefile_filepath <- "./output/countries_shapeFile.RData"
 
 #if already has countries_shapeFile.RData under output folder, no need to process it again
 #otherwise, read files from data folder to create countries_shapeFile.RData under output folder
 if(file.exists(output_shapefile_filepath)){
   load(output_shapefile_filepath)
 }else{
-  countries <- readOGR(dsn ="../data/ne_50m_admin_0_countries",
+  countries <- readOGR(dsn ="./output/ne_50m_admin_0_countries/ne_50m_admin_0_countries.shp",
                        layer = "ne_50m_admin_0_countries",
                        encoding = "utf-8",use_iconv = T,
                        verbose = FALSE)
@@ -280,5 +371,5 @@ nyc_cases <- sum(data.use$COVID_CASE_COUNT)
 total_banall <-  nrow(latest_orig[latest_orig$intl_travel.value=='ban on all regions/total border closure'
                                   |latest_orig$intl_travel.value=='ban arrivals from some regions',])
 
-write.csv(currentcases, file = '../app/output/currentcases.csv',row.names=F)
-write.csv(latest_orig, file = '../app/output/latest_orig.csv',row.names=F)
+write.csv(currentcases, file = './output/currentcases.csv',row.names=F)
+write.csv(latest_orig, file = './output/latest_orig.csv',row.names=F)

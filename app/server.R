@@ -7,17 +7,17 @@ server <- function(input, output) {
     #create summary box for total covid case in the world as summary
     output$covid_case_world <- renderValueBox({
         #-----need dataframe value------#
-        valueBox(totalactivecases_data, subtitle = 'Total cases in the world', 
+        valueBox(totalactivecases_data, subtitle = 'Total Covid-19 cases in the world', 
                  icon = icon('globe-americas'), 
                  color = 'light-blue')})
     output$covid_case_nyc <- renderValueBox({
         #-----need dataframe value------#
-        valueBox(nyc_cases, subtitle = 'Total cases in NYC', 
+        valueBox(nyc_cases, subtitle = 'Total Covid-19 cases in NYC', 
                  icon = icon('city'), 
                  color = 'teal')
     })
     output$countries_without_travel_bans <- renderValueBox({
-        valueBox(total_banall, subtitle = 'Countries with travel bans', 
+        valueBox(total_banall, subtitle = 'Countries with Covid-19 related travel bans', 
                  icon = icon('flag'), 
                  color = 'olive')
         
@@ -32,7 +32,8 @@ server <- function(input, output) {
                           tags$li("Policies: continuously updated latest government policies pulled from Oxford Covid-19 Government Response Tracker."),
                           tags$li("Filter by 1 criteria: heatmap of every country’s policies/ Covid-19 data with detailed notes on policy of interest. Users can also filter out countries that adopt a certain policy (e.g. no measure) within each criteria (e.g. International Travel) by selecting that policy from the dropdown."),
                           tags$li("Filter by Multiple criteria: After selecting values for each and every criteria of interest, the map will highlight those that meet the requirements."),
-                          tags$li("Filter by Countries: Select countries of interest. Hover over each country for a list of all its policies and Covid-19 data.")
+                          tags$li("Filter by Countries: Select countries of interest. Hover over each country for a list of all its policies and Covid-19 data."),
+                          h5("*Dashboard data are for countries that are mapped and have data available")
                       ))
         )
         )
@@ -300,7 +301,7 @@ server <- function(input, output) {
                                             latest_orig,
                                             by.x = 'NAME',
                                             by.y = 'CountryName',sort = FALSE)
-                    write.csv(countries_join,file= '../app/output/countries_join.csv')
+                    write.csv(countries_join,file= './output/countries_join.csv')
                     
                     output$map <- renderLeaflet({
                         leaflet(countries) %>%setView(0, 30, zoom = 2) })
@@ -394,7 +395,7 @@ server <- function(input, output) {
                                               heatmap_data(),
                                               by.x = 'NAME',
                                               by.y = 'CountryName',sort = FALSE)
-                    write.csv(intl_travel_join, file = '../app/output/Intl_Travel_join.csv')
+                    write.csv(intl_travel_join, file = './output/Intl_Travel_join.csv')
                     
                     #policy_val <- reactive({return(input$intl_travel)})
                     
@@ -427,7 +428,7 @@ server <- function(input, output) {
                     }else if (input$intl_travel!='All'){
                         intl_travel_filter <- intl_travel_join
                         intl_travel_filter$intl_travel.value[intl_travel_filter$intl_travel.value!=input$intl_travel] <- NA
-                        write.csv(intl_travel_filter, file = '../app/output/Intl_Travel_filter.csv')
+                        write.csv(intl_travel_filter, file = './output/Intl_Travel_filter.csv')
                         
                         country_popup <- paste0("<strong>Country: </strong>",
                                                 intl_travel_filter$NAME,
@@ -445,7 +446,7 @@ server <- function(input, output) {
                 else if (input$heatmap == "Domestic Movement")
                 {
                     dom_move_join<- merge(countries,heatmap_data(),by.x = 'NAME',by.y = 'CountryName',sort = FALSE)
-                    write.csv(dom_move_join, file = '../app/output/Dom_move_join.csv')
+                    write.csv(dom_move_join, file = './output/Dom_move_join.csv')
                     
                     if(input$dom_move=='All')
                     {
@@ -470,7 +471,7 @@ server <- function(input, output) {
                     {
                         dom_move_filter <- dom_move_join
                         dom_move_filter$dom_move.value[dom_move_filter$dom_move.value!=input$dom_move] <- NA
-                        write.csv(dom_move_filter, file = '../app/output/Dom_move_filter.csv')
+                        write.csv(dom_move_filter, file = './output/Dom_move_filter.csv')
                         
                         country_popup <- paste0("<strong>Country: </strong>",
                                                 dom_move_filter$NAME,
@@ -488,7 +489,7 @@ server <- function(input, output) {
                 else if (input$heatmap == "Stay at Home")
                 {
                     stayhome_join<- merge(countries,heatmap_data(),by.x = 'NAME',by.y = 'CountryName',sort = FALSE)
-                    write.csv(stayhome_join, file = '../app/output/Stayhome_join.csv')   
+                    write.csv(stayhome_join, file = './output/Stayhome_join.csv')   
                     if(input$stayhome=='All')
                     {
                         #pop up for polygons
@@ -512,7 +513,7 @@ server <- function(input, output) {
                     {
                         stayhome_filter <- stayhome_join
                         stayhome_filter$stayhome.value[stayhome_filter$stayhome.value!=input$stayhome] <- NA
-                        write.csv(stayhome_filter, file = '../app/output/Stayhome_filter.csv')
+                        write.csv(stayhome_filter, file = './output/Stayhome_filter.csv')
                         
                         country_popup <- paste0("<strong>Country: </strong>",
                                                 stayhome_join$NAME,
@@ -563,7 +564,7 @@ server <- function(input, output) {
                     {
                         gathering_filter <- gathering_join
                         gathering_filter$gathering.value[gathering_filter$gathering.value!=input$gathering] <- NA
-                        write.csv(gathering_filter, file = '../app/output/Gathering_filter.csv')
+                        write.csv(gathering_filter, file = './output/Gathering_filter.csv')
                         
                         country_popup <- paste0("<strong>Country: </strong>",
                                                 gathering_filter$NAME,
@@ -613,7 +614,7 @@ server <- function(input, output) {
                     {
                         publictrans_filter <- publictrans_join
                         publictrans_filter$public_transport.value[publictrans_filter$public_transport.value!=input$pub_trans] <- NA
-                        write.csv(publictrans_filter, file = '../app/output/Publictrans_filter.csv')
+                        write.csv(publictrans_filter, file = './output/Publictrans_filter.csv')
                         
                         country_popup <- paste0("<strong>Country: </strong>",
                                                 publictrans_filter$NAME,
@@ -640,7 +641,7 @@ server <- function(input, output) {
                 latest_all <-merge(latest_all,latest_stayhome,by= 'CountryName',duplicateGeoms = TRUE)
                 latest_all <-merge(latest_all,latest_gathering,by= 'CountryName',duplicateGeoms = TRUE)
                 latest_all <-merge(latest_all,latest_public_transport,by= 'CountryName',duplicateGeoms = TRUE)
-                write.csv(latest_all, file = '../app/output/Latest_all.csv')
+                write.csv(latest_all, file = './output/Latest_all.csv')
                 
                 #Subset latest_all by International Travel value option
                 policy_data <- reactive({
@@ -661,7 +662,7 @@ server <- function(input, output) {
                                          policy_data(),
                                          by.x = 'NAME',
                                          by.y = 'CountryName',sort = FALSE)
-                    write.csv(policy_join, file = '../app/output/Policy_join.csv')
+                    write.csv(policy_join, file = './output/Policy_join.csv')
                     
                     output$map <- renderLeaflet({
                         leaflet(countries) %>%
