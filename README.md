@@ -30,6 +30,7 @@ Term: Fall 2020
 
 + **Contribution statement**: ([default](doc/a_note_on_contributions.md)) All team members contributed equally in all stages of this project. All team members approve our work presented in this GitHub repository including this contributions statement. 
 
++ **Project link**: [https://kka2120.shinyapps.io/travel-during-covid-19/](https://kka2120.shinyapps.io/travel-during-covid-19/)
 
 ![](doc/figs/intro.png)
 
