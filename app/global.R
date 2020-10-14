@@ -2,7 +2,7 @@
 
 # list of packages used
 pack <- c("tidyverse", "shiny", "sf", "leaflet", "jsonlite", "raster", "tigris", "shinydashboard",
-          "httr", "jsonlite", "rlist","shinycssloaders","RCurl","rgdal","shinythemes","tmap","viridis","DT")
+          "httr", "jsonlite", "rlist","shinycssloaders","RCurl","rgdal","shinythemes","tmap","viridis","DT","zoo")
 
 #Kristen's part
 # load packages and data
@@ -140,11 +140,6 @@ latest_stayhome <- read.csv('../output/Latest_stayhome.csv')
 latest_gathering <- read.csv('../output/Latest_gathering.csv')
 latest_public_transport <- read.csv('../output/Latest_public_transport.csv')
 
-latest_orig <- merge(latest_intl_travel, latest_dom_move, by= 'CountryName',duplicateGeoms = TRUE)
-latest_orig <-merge(latest_orig,latest_stayhome,by= 'CountryName',duplicateGeoms = TRUE)
-latest_orig <-merge(latest_orig,latest_gathering,by= 'CountryName',duplicateGeoms = TRUE)
-latest_orig <-merge(latest_orig,latest_public_transport,by= 'CountryName',duplicateGeoms = TRUE)
-
 #Download the spatial polygons dataframe in this link
 # https://www.naturalearthdata.com/downloads/50m-cultural-vectors/50m-admin-0-countries-2/
 
@@ -162,4 +157,115 @@ if(file.exists(output_shapefile_filepath)){
   save(countries, file=output_shapefile_filepath)
 }
 
+#Jaival's Part
+#importing the 5 datasets
+confirmedUS <- read.csv(file = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_US.csv")
+confirmedglobal <- read.csv(file = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv")
+deathsUS <- read.csv(file = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_US.csv")
+deathsglobal <- read.csv(file = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_deaths_global.csv")
+recoveredglobal <- read.csv(file = "https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_recovered_global.csv")
 
+renamecountries <- function(df){
+  df$Country.Region <- as.character(df$Country.Region)
+  df$Country.Region[df$Country.Region == "Congo (Kinshasa)"] <- "Dem. Rep. Congo"
+  df$Country.Region[df$Country.Region == "Congo (Brazzaville)"] <- "Congo"
+  df$Country.Region[df$Country.Region == "Central African Republic"] <- "Central African Rep."
+  df$Country.Region[df$Country.Region == "Equatorial Guinea"] <- "Eq. Guinea"
+  df$Country.Region[df$Country.Region == "Western Sahara"]<-"W. Sahara"
+  df$Country.Region[df$Country.Region == "Eswatini"] <- "eSwatini"
+  df$Country.Region[df$Country.Region == "Taiwan*"] <- "Taiwan"
+  df$Country.Region[df$Country.Region== "Cote d'Ivoire"] <-"CÃ´te d'Ivoire"
+  df$Country.Region[df$Country.Region == "Korea, South"] <- "South Korea"
+  df$Country.Region[df$Country.Region == "Bosnia and Herzegovina"] <- "Bosnia and Herz."
+  df$Country.Region[df$Country.Region == "US"] <- "United States of America"
+  df$Country.Region[df$Country.Region == "Burma"]<-"Myanmar"
+  df$Country.Region[df$Country.Region == "Holy See"]<-"Vatican"
+  df$Country.Region[df$Country.Region=="South Sudan"]<-"S. Sudan"
+  return(df)
+}
+
+mergeregions <- function(df) {
+  df <- renamecountries(df)
+  not_select_cols <- c("Province.State","Lat","Long")
+  aggre_df <- df %>% group_by(Country.Region) %>% 
+    dplyr::select(-one_of(not_select_cols)) %>% summarise_all(sum)
+  aggre_df <- aggre_df %>% remove_rownames %>% 
+    tibble::column_to_rownames(var="Country.Region")
+  date_name <- colnames(aggre_df)
+  date_choices <- as.Date(date_name,format = 'X%m.%d.%y')
+  colnames(aggre_df) <- date_choices
+  return(aggre_df)
+}
+
+confirmedglobal <- mergeregions(confirmedglobal)
+deathsglobal <- mergeregions(deathsglobal)
+recoveredglobal <- mergeregions(recoveredglobal)
+
+currentglobal <- confirmedglobal - deathsglobal - recoveredglobal
+rollingaverage <- function(df){
+  df <- as.data.frame(t(df))
+  df <- as.data.frame(rollmean(df[1:ncol(df)],k=14,fill = NA))
+  df <- as.data.frame(t(df))
+  return(df)
+}
+
+confirmedglobal_14 <- rollingaverage(confirmedglobal)
+deathsglobal_14 <- rollingaverage(deathsglobal)
+recoveredglobal_14 <- rollingaverage(recoveredglobal)
+currentglobal_14 <- rollingaverage(currentglobal)
+
+confirmedglobal <- cbind(row.names(confirmedglobal),confirmedglobal)
+colnames(confirmedglobal)[1] <- "Name"
+deathsglobal <- cbind(row.names(deathsglobal),deathsglobal)
+colnames(deathsglobal)[1] <- "Name"
+recoveredglobal <- cbind(row.names(recoveredglobal),recoveredglobal)
+colnames(recoveredglobal)[1] <- "Name"
+currentglobal <- cbind(row.names(currentglobal),currentglobal)
+colnames(currentglobal)[1] <- "Name"
+confirmedglobal_14 <- cbind(row.names(confirmedglobal_14),confirmedglobal_14)
+colnames(confirmedglobal_14)[1] <- "Name"
+deathsglobal_14 <- cbind(row.names(deathsglobal_14),deathsglobal_14)
+colnames(deathsglobal_14)[1] <- "Name"
+recoveredglobal_14 <- cbind(row.names(recoveredglobal_14),recoveredglobal_14)
+colnames(recoveredglobal_14)[1] <- "Name"
+currentglobal_14 <- cbind(row.names(currentglobal_14),currentglobal_14)
+colnames(currentglobal_14)[1] <- "Name"
+
+confirmed <- as.data.frame(c(confirmedglobal[c(1,ncol(confirmedglobal))]))
+deaths <- as.data.frame(c(deathsglobal[c(1,ncol(deathsglobal))]))
+recovered <- as.data.frame(c(recoveredglobal[c(1,ncol(recoveredglobal))]))
+current <- as.data.frame(c(currentglobal[c(1,ncol(currentglobal))]))
+
+colnames(confirmed) <- c("Name","Confirmed")
+colnames(deaths) <- c("Name","Deaths")
+colnames(recovered) <- c("Name","Recovered")
+colnames(current) <- c("Name","Current")
+
+changecalculator <- function(df){
+  return(((df[ncol(df)-7]-df[ncol(df)-21])/df[ncol(df)-21])*100)
+}
+confirmedchange <- changecalculator(confirmedglobal_14)
+deathschange <-changecalculator(deathsglobal_14)
+recoveredchange <- changecalculator(recoveredglobal_14)
+currentchange <- changecalculator(currentglobal_14)
+
+confirmed_14 <- data.frame(c(confirmedglobal[1],confirmedchange))
+deaths_14 <- data.frame(c(deathsglobal[1],deathschange))
+recovered_14 <- data.frame(c(recoveredglobal[1],recoveredchange))
+current_14 <- data.frame(c(currentglobal[1],currentchange))
+
+colnames(confirmed_14) <- c("Name","Change")
+colnames(deaths_14) <- c("Name","Change")
+colnames(recovered_14) <- c("Name","Change")
+colnames(current_14) <- c("Name","Change")
+
+currentcases <- drop_na(as.data.frame(c(current,current_14[2])))
+colnames(currentcases)[1] <-"CountryName"
+
+latest_orig <- merge(latest_intl_travel, latest_dom_move, by= 'CountryName',duplicateGeoms = TRUE)
+latest_orig <- merge(latest_orig,latest_stayhome,by= 'CountryName',duplicateGeoms = TRUE)
+latest_orig <- merge(latest_orig,latest_gathering,by= 'CountryName',duplicateGeoms = TRUE)
+latest_orig <- merge(latest_orig,latest_public_transport,by= 'CountryName',duplicateGeoms = TRUE)
+latest_orig <- merge(latest_orig,currentcases,by= 'CountryName',duplicateGeoms = TRUE)
+write.csv(currentcases, file = '../output/currentcases.csv',row.names=F)
+write.csv(latest_orig, file = '../output/latest_orig.csv',row.names=F)

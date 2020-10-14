@@ -17,44 +17,45 @@ ui <- dashboardPage(
   ),
   dashboardBody(
     tabItems(
-      tabItem(tabName = "Home",       
-      fluidRow(
-        box(width = 15, 
-            solidHeader = TRUE, h1("Traveling During Covid-19"),
-            h5("Since China reported its first cases to the World Health Organization (WHO) in December, authorities in 214 countries have reported about 37 million Covid-19 cases and 1.1 million deaths."),
-            h5("It can seem like with Covid-19, it is impossible to travel. This app was built for New Yorkers, to show them all the places they are still able to travel to or safely hang-out at, even with the pandemic still present."),
-            )),
-        fluidRow(box(width = 15, 
-                     solidHeader = TRUE, h3("Overview of the App"),
-                     tags$div(tags$ul(
-                       tags$li("World: This tab shows each country’s most recent Covid-19 cases and related policies across the world so you can figure out where you can travel during the pandemic. When you’ve chosen a country you can and want to travel to, find the best priced flight with real-time flight information, including departure time and fare price, to finalize your next international voyage."),
-                       tags$li("Maps: Even if you can’t travel internationally right now, you can still travel, explore, and hang out around New York City. This tab contains a map of New York City that allows you to find your nearest park or preferred outdoor space, social-distance spots and dining, bike stations, bike lanes, as well as stay up-to-date on Covid-19 cases in New York City."),
-                     )))),
-      fluidRow(box(width = 15, 
-                   solidHeader = TRUE, h3("Data Overview"),
-                   h5("World Data"),
-                   tags$div(tags$ul(
-                     tags$li("Policies: continuously updated latest government policies pulled from Oxford Covid-19 Government Response Tracker."),
-                     tags$li("Filter by 1 criteria: heatmap of every country’s policies/ Covid-19 data with detailed notes on policy of interest. Users can also filter out countries that adopt a certain policy (e.g. no measure) within each criteria (e.g. International Travel) by selecting that policy from the dropdown."),
-                     tags$li("Filter by Multiple criteria: After selecting values for each and every criteria of interest, the map will highlight those that meet the requirements."),
-                     tags$li("Filter by Countries: Select countries of interest. Hover over each country for a list of all its policies and Covid-19 data.")
-                   )),
-                   h5("New York City Data"),
-                   tags$div(tags$ul(
-                     tags$li("Open Street data: streets closed off to cars in NYC, for pedistriations to hang-out and restaurants to create outdoor dining during Covid-19."),
-                     tags$li("Citibike: shows every Citibike, easy-to-use pay-by-ride bikes, station in New York City."),
-                     tags$li("Parks: New York City parks."),
-                     tags$li("Directions: find the fastest walking path to get from where you are in the city to where you want to go."),
-                     tags$li("Covid-19: up-to-date information of Covid-19 cases in each zip code in New York City.")
-                   ))
-                   
-                   
-                   )),
-        fluidRow(box(width = 15, solidHeader = TRUE, h4("Contributors"),
-                 h5("Kristen Akey, Jaival Desai, Ziyu Kong, Yiran Lin, Linh Nguyen, Siyuan Zhou")
-                 ))
-      ),
-# Kristen's part      
+        tabItem(tabName = "Home",       
+                fluidRow(
+                  box(width = 15, 
+                      solidHeader = TRUE, h1("Traveling During Covid-19"),
+                      h5("Since China reported its first cases to the World Health Organization (WHO) in December, authorities in 214 countries have reported about 37 million Covid-19 cases and 1.1 million deaths."),
+                      h5("It can seem like with Covid-19, it is impossible to travel. This app was built for New Yorkers, to show them all the places they are still able to travel to or safely hang-out at, even with the pandemic still present."),
+                  )),
+                fluidRow(box(width = 15, 
+                             solidHeader = TRUE, h3("Overview of the App"),
+                             tags$div(tags$ul(
+                               tags$li("World: This tab shows each country’s most recent Covid-19 cases and related policies across the world so you can figure out where you can travel during the pandemic. When you’ve chosen a country you can and want to travel to, find the best priced flight with real-time flight information, including departure time and fare price, to finalize your next international voyage."),
+                               tags$li("Maps: Even if you can’t travel internationally right now, you can still travel, explore, and hang out around New York City. This tab contains a map of New York City that allows you to find your nearest park or preferred outdoor space, social-distance spots and dining, bike stations, bike lanes, as well as stay up-to-date on Covid-19 cases in New York City."),
+                             )))),
+                fluidRow(box(width = 15, 
+                             solidHeader = TRUE, h3("Data Overview"),
+                             h5("World Data"),
+                             tags$div(tags$ul(
+                               tags$li("Policies: continuously updated latest government policies pulled from Oxford Covid-19 Government Response Tracker."),
+                               tags$li("Filter by 1 criteria: heatmap of every country’s policies/ Covid-19 data with detailed notes on policy of interest. Users can also filter out countries that adopt a certain policy (e.g. no measure) within each criteria (e.g. International Travel) by selecting that policy from the dropdown."),
+                               tags$li("Filter by Multiple criteria: After selecting values for each and every criteria of interest, the map will highlight those that meet the requirements."),
+                               tags$li("Filter by Countries: Select countries of interest. Hover over each country for a list of all its policies and Covid-19 data.")
+                             )),
+                             h5("New York City Data"),
+                             tags$div(tags$ul(
+                               tags$li("Open Street data: streets closed off to cars in NYC, for pedistriations to hang-out and restaurants to create outdoor dining during Covid-19."),
+                               tags$li("Citibike: shows every Citibike, easy-to-use pay-by-ride bikes, station in New York City."),
+                               tags$li("Parks: New York City parks."),
+                               tags$li("Directions: find the fastest walking path to get from where you are in the city to where you want to go."),
+                               tags$li("Covid-19: up-to-date information of Covid-19 cases in each zip code in New York City.")
+                             ))
+                             
+                             
+                )),
+                fluidRow(box(width = 15, solidHeader = TRUE, h4("Contributors"),
+                             h5("Kristen Akey, Jaival Desai, Ziyu Kong, Yiran Lin, Linh Nguyen, Siyuan Zhou")
+                ))
+        ),
+        
+      # Kristen's part
       tabItem(tabName = "nyc_data",
               titlePanel("Where Can I Travel or Hang Out (Social Distance Style) in New York City?"),
               h5("Even if you are unable to travel internationally right now, there are still many things to do safely in New York City."),
@@ -139,6 +140,10 @@ ui <- dashboardPage(
                                           choices = list('All','no measures',
                                                          'recommend closing/ significantly reduce volume',
                                                          'require closing'))),
+                absolutePanel(id = "control", class = "panel panel-default", fixed = TRUE, draggable = FALSE,
+                              top = 50, left = 1240, right = "auto", bottom = "auto", width = 180, height = "auto",
+                              selectInput('covidcases',label = 'Current Cases',
+                                          choices = list('Daily Count','Percentage Change in MA for the last 2 weeks'))),
                 
                 #fluidRow(column(7,
                 #sidebarLayout(
@@ -157,7 +162,7 @@ ui <- dashboardPage(
                               conditionalPanel(condition = "input.filter == '1 criterion'", 
                                                selectInput(inputId= 'heatmap', label = "Policy Type",
                                                            choices = c('International Travel','Domestic Movement',
-                                                                       'Stay at Home','Gathering Restrictions','Public Transport'))),
+                                                                       'Stay at Home','Gathering Restrictions','Public Transport','Current Cases'))),
                               
                               conditionalPanel(condition = "input.filter == 'Multiple criteria'",
                                                selectInput(inputId= 'choices', label = "Policy Type",
@@ -179,42 +184,42 @@ ui <- dashboardPage(
       ),
       div(uiOutput("ticket"))
       )),
-      tabItem(tabName = "About",
-              # h4("Data Sources")
-              fluidRow(box(width = 15, title = "Data Sources", 
-                           solidHeader = TRUE, "— World-wide Policies: ",
-                           tags$a(href = "https://github.com/OxCGRT/covid-policy-tracker/tree/master/data", 
-                                  "Latest changes"),
-                        br(), "—",
-                         tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
-                                "World - Coronavirus Data"),
-                       br(), "—",
-                       tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
-                              "World - Coronavirus Data"),
-                       br(), "—",
-                       tags$a(href = "https://github.com/nychealth/coronavirus-data", 
-                              "New York City Health - Coronavirus Data"),
-                       br(), "—",
-                       tags$a(href = "https://data.cityofnewyork.us/Health/Open-Streets-Locations/uiay-nctu", 
-                              "NYC Open Data - Open Street Locations"),
-                       br(), "—",
-                       tags$a(href = "https://data.cityofnewyork.us/Recreation/Open-Space-Parks-/g84h-jbjm", 
-                              "NYC Open Data - New York City Parks"),
-                       br(), "—",
-                       tags$a(href = "https://data.cityofnewyork.us/Transportation/Bicycle-Routes/7vsa-caz7", 
-                              "NYC Open Data - New York City Bike Lanes"),
-                       br(), "—",
-                       tags$a(href = "http://gbfs.citibikenyc.com/gbfs/gbfs.json", 
-                              "Citibike Station data"),
-                       
-                       
-                       )),
-              fluidRow(box(width = 15, h4("Project Code"),
-                           solidHeader = TRUE, "All code for this project is on",
-                           tags$a(href = "https://github.com/TZstatsADS/Fall2020-Project2-group2",
-                                  "Github"), "."))
-              
-              )
+tabItem(tabName = "About",
+        # h4("Data Sources")
+        fluidRow(box(width = 15, title = "Data Sources", 
+                     solidHeader = TRUE, "— World-wide Policies: ",
+                     tags$a(href = "https://github.com/OxCGRT/covid-policy-tracker/tree/master/data", 
+                            "Latest changes"),
+                     br(), "—",
+                     tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
+                            "World - Coronavirus Data"),
+                     br(), "—",
+                     tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
+                            "World - Coronavirus Data"),
+                     br(), "—",
+                     tags$a(href = "https://github.com/nychealth/coronavirus-data", 
+                            "New York City Health - Coronavirus Data"),
+                     br(), "—",
+                     tags$a(href = "https://data.cityofnewyork.us/Health/Open-Streets-Locations/uiay-nctu", 
+                            "NYC Open Data - Open Street Locations"),
+                     br(), "—",
+                     tags$a(href = "https://data.cityofnewyork.us/Recreation/Open-Space-Parks-/g84h-jbjm", 
+                            "NYC Open Data - New York City Parks"),
+                     br(), "—",
+                     tags$a(href = "https://data.cityofnewyork.us/Transportation/Bicycle-Routes/7vsa-caz7", 
+                            "NYC Open Data - New York City Bike Lanes"),
+                     br(), "—",
+                     tags$a(href = "http://gbfs.citibikenyc.com/gbfs/gbfs.json", 
+                            "Citibike Station data"),
+                     
+                     
+        )),
+        fluidRow(box(width = 15, h4("Project Code"),
+                     solidHeader = TRUE, "All code for this project is on",
+                     tags$a(href = "https://github.com/TZstatsADS/Fall2020-Project2-group2",
+                            "Github"), "."))
+        
+)
     )
   )
 )

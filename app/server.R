@@ -245,7 +245,9 @@ server <- function(input, output) {
                                             "<br>", "Domestic Movement: ",countries_join$dom_move.value,"<br>",
                                             "<br>", "Stay at Home: ",countries_join$stayhome.value,"<br>",
                                             "<br>", "Gathering: ",countries_join$gathering.value,"<br>",
-                                            "<br>", "Public Transport: ",countries_join$public_transport.value,"<br>")
+                                            "<br>", "Public Transport: ",countries_join$public_transport.value,"<br>",
+                                            "<br>", "Active Cases: ",countries_join$Current,"<br>",
+                                            "<br>", "Percentage Change: ",countries_join$Change,"<br>")
                     
                     factpal <- colorFactor(topo.colors(1), countries_join$Selected)
                     
@@ -270,8 +272,51 @@ server <- function(input, output) {
                     }else if(input$heatmap == "Gathering Restrictions"){
                         return(latest_gathering)
                     }else if(input$heatmap == "Public Transport"){
-                        return(latest_public_transport)}
+                        return(latest_public_transport)
+                    }else if(input$heatmap == "Current Cases"){
+                        return(currentcases)}
                 })
+                
+                if(input$heatmap == "Current Cases"){
+                    currentcases_join <- merge(countries,
+                                               heatmap_data(),
+                                               by.x = 'NAME',
+                                               by.y = 'CountryName',sort = FALSE)
+                    write.csv(currentcases_join, file = 'currentcases_join.csv')
+                    cases_val <- reactive({return(input$covidcases)})
+                    output$map <- renderLeaflet({
+                        leaflet(countries) %>% 
+                           # addProviderTiles("Mapbox", options = providerTileOptions(id = "mapbox.light",
+                            #                                                         accessToken = Sys.getenv('MAPBOX_ACCESS_TOKEN'))) %>%
+                            setView(0, 30, zoom = 2)
+                    })
+                    if(input$covidcases == 'Daily Count'){
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                currentcases_join$NAME,
+                                                "<br>", "Cases: ",currentcases_join$Current,"<br>")
+                        bins <- c(0, 50, 100, 500, 1000, 5000, 20000, 50000, 100000,Inf)
+                        pal <- colorBin("YlOrRd", domain = currentcases_join$Current, bins = bins)
+                        proxy <- leafletProxy("map",data = currentcases_join) %>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~pal(Current),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "white",weight = 1,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup) %>% clearControls()%>%
+                            addLegend("topleft", pal = pal,values = ~Current, title = "Cases",opacity = 1)
+                        
+                    }else if(input$covidcases != 'Daily Count'){
+                        country_popup <- paste0("<strong>Country: </strong>",
+                                                currentcases_join$NAME,
+                                                "<br>", "Percentage Change: ",currentcases_join$Change,"<br>")
+                        bins <- c(-500, -100, 0, 10, 30, 50, 100,Inf)
+                        pal <- colorBin("YlOrRd", domain = currentcases_join$Change, bins = bins)
+                        proxy <- leafletProxy("map",data = currentcases_join) %>%
+                            addPolygons(stroke = TRUE, smoothFactor = 0.2, fillOpacity = 1,
+                                        fillColor = ~pal(Change),color = 'black',weight = "0.7", opacity=1,
+                                        highlightOptions = highlightOptions(color = "white",weight = 1,bringToFront = TRUE),
+                                        layerId = ~NAME,popup = country_popup) %>% clearControls()%>%
+                            addLegend("topleft", pal = pal,values = ~Change, title = "Cases",opacity = 1)
+                    }
+                }
                 
                 if(input$heatmap == "International Travel")
                 {
