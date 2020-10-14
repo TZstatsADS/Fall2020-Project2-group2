@@ -15,7 +15,7 @@ library(shinyjs)
 
 ui <- dashboardPage(
   skin="purple",
-  dashboardHeader(title = strong("Traveling During Covid-19"), titleWidth="300px"),
+  dashboardHeader(title = "Traveling During Covid-19", titleWidth="280"),
   dashboardSidebar(
     sidebarMenu(
       menuItem("Home", tabName = "Home",icon = icon("home")),
@@ -34,6 +34,7 @@ ui <- dashboardPage(
               ), 
               box(width = 15, img(src = 'https://scontent-lga3-2.xx.fbcdn.net/v/t31.0-0/p417x417/23213298_128755171176807_7649637594963973686_o.jpg?_nc_cat=104&_nc_sid=e3f864&_nc_ohc=xnJ3SuXGIT4AX_lpUbR&_nc_ht=scontent-lga3-2.xx&tp=6&oh=788f64b8e7cc1513acab12b99b5ce96e&oe=5FAD9C48',
                                   width = '100%', height = '60%')),
+              h3("Where New Yorkers Can Travel During Covid-19"),
               fluidRow(box(width = 12, title = "Introduction", status = "primary",
                            solidHeader = TRUE, 
                            h5("Since China reported its first cases to the World Health Organization (WHO) in December, authorities in 214 countries have reported about 37 million Covid-19 cases and 1.1 million deaths. "), 
@@ -204,9 +205,6 @@ tabItem(tabName = "About",
             solidHeader = TRUE, "— World-wide Policies: ",
             tags$a(href = "https://github.com/OxCGRT/covid-policy-tracker/tree/master/data", 
                    "Latest changes"),
-            br(), "—",
-            tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
-                   "World - Coronavirus Data"),
             br(), "—",
             tags$a(href = "https://github.com/CSSEGISandData/COVID-19", 
                    "World - Coronavirus Data"),
