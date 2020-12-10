@@ -44,6 +44,11 @@ if (!require("raster")) {
   library(raster)
 }
 
+if (!require("rgdal")) {
+  install.packages("rgdal")
+  library(rgdal)
+}
+
 if (!require("tigris")) {
   install.packages("tigris")
   library(tigris)
@@ -116,7 +121,7 @@ citibike<-fromJSON("https://gbfs.citibikenyc.com/gbfs/en/station_information.jso
 citibike <- citibike$data$stations
 bike_lanes <- st_read("./output/Bicycle_Routes/geo_export_21a36b1c-263a-41be-a2e0-091316a94ecc.shp")
 open_street <- st_read("./output/open_street/open_streets.shp")
-covid_df <- read_csv("https://raw.githubusercontent.com/nychealth/coronavirus-data/master/data-by-modzcta.csv")
+covid_df <- read_csv("https://raw.githubusercontent.com/nychealth/coronavirus-data/master/totals/data-by-modzcta.csv")
 
 data.use <- covid_df %>% dplyr::select(MODIFIED_ZCTA, COVID_CASE_COUNT, NEIGHBORHOOD_NAME)
 options(tigris_use_cache = TRUE)

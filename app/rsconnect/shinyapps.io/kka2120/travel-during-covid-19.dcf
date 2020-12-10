@@ -1,0 +1,12 @@
+name: travel-during-covid-19
+title: travel-during-covid-19
+username:
+account: kka2120
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3009905
+bundleId: 3969119
+url: https://kka2120.shinyapps.io/travel-during-covid-19/
+when: 1607577314.18744
+asMultiple: FALSE
+asStatic: FALSE

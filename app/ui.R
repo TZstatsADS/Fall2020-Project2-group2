@@ -14,7 +14,7 @@ library(shinyjs)
 
 
 ui <- dashboardPage(
-  skin="purple",
+  skin="blue",
   dashboardHeader(title = "Traveling During Covid-19", titleWidth="280"),
   dashboardSidebar(
     sidebarMenu(
@@ -32,7 +32,7 @@ ui <- dashboardPage(
                 valueBoxOutput('covid_case_nyc'), 
                 valueBoxOutput('countries_without_travel_bans')
               ), 
-              box(width = 15, img(src = 'https://scontent-lga3-2.xx.fbcdn.net/v/t31.0-0/p417x417/23213298_128755171176807_7649637594963973686_o.jpg?_nc_cat=104&_nc_sid=e3f864&_nc_ohc=xnJ3SuXGIT4AX_lpUbR&_nc_ht=scontent-lga3-2.xx&tp=6&oh=788f64b8e7cc1513acab12b99b5ce96e&oe=5FAD9C48',
+              box(width = 15, img(src = 'pxfuel.com.jpg',
                                   width = '100%', height = '60%')),
               h3("Where New Yorkers Can Travel During Covid-19"),
               fluidRow(box(width = 12, title = "Introduction", status = "primary",
